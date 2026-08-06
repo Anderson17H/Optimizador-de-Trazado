@@ -1,5 +1,6 @@
 import pyclipper
 import math
+import random
 from shapely.affinity import rotate, translate
 from shapely.geometry import Polygon, box
 from shapely.ops import unary_union
@@ -69,7 +70,6 @@ def generar_angulos_por_aplome(tolerancia_cm, alto_molde, paso_rot=1):
     return list(set(angulos))
 
 def generar_ordenes_estrategicos(piezas):
-    # CORREGIDO: Se añadió [0] para leer el área y la altura del Polígono en la tupla
     por_area = sorted(piezas, key=lambda p: p[0].area, reverse=True)
     por_altura = sorted(piezas, key=lambda p: (p[0].bounds[3] - p[0].bounds[1]), reverse=True)
     
@@ -89,11 +89,29 @@ def generar_ordenes_estrategicos(piezas):
     return [por_area, por_altura, intercalado]
 
 # ==========================================================
-# 3. LÓGICA DE EMPAQUETADO EXACTO
+# 3. LÓGICA DE EMPAQUETADO EXACTO Y PODA ANTICIPADA
 # ==========================================================
-def empaquetar_un_orden(piezas_ordenadas, ancho_mesa, tolerancia_cm, paso_rot, valor_buffer):
+def empaquetar_un_orden(piezas_ordenadas, ancho_mesa, tolerancia_cm, paso_rot, valor_buffer, largo_maximo=float('inf'), caja_doblez=None, pos_x_caja=0.0):
     piezas_colocadas_finales = []
     memoria_mesa = []
+
+    # --- INYECCIÓN DE LA CAJA DE DOBLEZ COMO OBSTÁCULO INICIAL ---
+    if caja_doblez is not None:
+        caja_poly = caja_doblez[0]
+        alias_caja = caja_doblez[1]
+        
+        # 1. Llevar la caja al origen real (X=0, Y=0) para el escudo NFP
+        minx, miny, _, _ = caja_poly.bounds
+        caja_origen = translate(caja_poly, xoff=-minx, yoff=-miny)
+        caja_origen_reducida = reducir_pieza(caja_origen, valor_buffer)
+        
+        # 2. La caja ubicada físicamente donde se dibujará
+        caja_ubicada = translate(caja_origen, xoff=pos_x_caja, yoff=0.0)
+        
+        # 3. Guardar en memoria el poligono origen para el NFP, y el X, Y real
+        memoria_mesa.append((caja_ubicada, caja_origen_reducida, pos_x_caja, 0.0))
+        piezas_colocadas_finales.append((caja_ubicada, alias_caja))
+    # --------------------------------------------------------------------  
 
     for pieza_tupla in piezas_ordenadas:
         pieza = pieza_tupla[0]
@@ -169,43 +187,112 @@ def empaquetar_un_orden(piezas_ordenadas, ancho_mesa, tolerancia_cm, paso_rot, v
             memoria_mesa.append((pieza_emergencia, pieza_emergencia_reducida, 0.0, largo_actual))
             piezas_colocadas_finales.append((pieza_emergencia, alias))
 
+        # --- FILTRO 2 (PODA DE PERMUTACIÓN) ---
+        largo_actual_tizado = max([p[0].bounds[3] for p in piezas_colocadas_finales])
+        if largo_actual_tizado > largo_maximo:
+            return None  # Aborta este orden específico inmediatamente
+
     return piezas_colocadas_finales
 
 def optimizar_nesting_completo(piezas_originales, ancho_mesa, tolerancia_rot=2.0, paso_rot=1,
                                 valor_buffer=0.1, n_ordenes_aleatorios=4, max_intercambios=15,
-                                callback_progreso=None):
+                                callback_progreso=None, largo_maximo=float('inf'), caja_doblez=None):
+    
+    if not piezas_originales and caja_doblez is not None:
+        minx, miny, _, _ = caja_doblez[0].bounds
+        return [(translate(caja_doblez[0], xoff=-minx, yoff=-miny), caja_doblez[1])]
+        
     if not piezas_originales:
         return []
 
     ordenes = generar_ordenes_estrategicos(piezas_originales)
     ordenes_a_evaluar = ordenes[:n_ordenes_aleatorios] if n_ordenes_aleatorios < 3 else ordenes
 
-    mejor_resultado = None
-    mejor_largo = float('inf')
+    mejor_resultado_global = None
+    mejor_largo_global = float('inf')
 
-    for idx, orden in enumerate(ordenes_a_evaluar):
-        if callback_progreso:
-            callback_progreso(f"Estrategia de ordenamiento {idx+1}/{len(ordenes_a_evaluar)}...")
+    # --- RECUPERAMOS LAS 5 POSICIONES EN X ---
+    posiciones_caja = [0.0]
+    if caja_doblez is not None:
+        ancho_caja = caja_doblez[0].bounds[2] - caja_doblez[0].bounds[0]
+        max_x = ancho_mesa - ancho_caja
+        
+        if max_x > 0.1:
+            posiciones_caja = []
+            num_pasos = 5
+            for i in range(num_pasos):
+                pos_x = (max_x * i) / (num_pasos - 1)
+                posiciones_caja.append(pos_x)
+    # -----------------------------------------
+
+    for pos_x in posiciones_caja:
+        mejor_orden_local = None
+        mejor_largo_local = float('inf')
+        
+        # --- FASE 1: HEURÍSTICA BASE ---
+        for idx, orden in enumerate(ordenes_a_evaluar):
+            if callback_progreso:
+                msg = f"Estrategia {idx+1}/{len(ordenes_a_evaluar)}"
+                if caja_doblez:
+                    msg += f" | Caja en X: {pos_x:.1f}"
+                callback_progreso(msg)
+                
+            resultado_prueba = empaquetar_un_orden(orden, ancho_mesa, tolerancia_rot, paso_rot, valor_buffer, largo_maximo, caja_doblez, pos_x)
             
-        resultado_prueba = empaquetar_un_orden(orden, ancho_mesa, tolerancia_rot, paso_rot, valor_buffer)
-        
-        # CORREGIDO: Se añadió [0] para leer bounds del polígono en la tupla
-        largo_prueba = max([p[0].bounds[3] for p in resultado_prueba]) if resultado_prueba else float('inf')
-        
-        if largo_prueba < mejor_largo:
-            mejor_largo = largo_prueba
-            mejor_resultado = resultado_prueba
+            if resultado_prueba is None:
+                continue
+            
+            largo_prueba = max([p[0].bounds[3] for p in resultado_prueba]) if resultado_prueba else float('inf')
+            
+            if largo_prueba < mejor_largo_local:
+                mejor_largo_local = largo_prueba
+                mejor_orden_local = orden
+                
+            if largo_prueba < mejor_largo_global:
+                mejor_largo_global = largo_prueba
+                mejor_resultado_global = resultado_prueba
 
-    return mejor_resultado
+        # --- FASE 2: COMPRESIÓN E INTERLOCKING ---
+        if mejor_orden_local is not None and max_intercambios > 0 and len(mejor_orden_local) > 1:
+            orden_base = list(mejor_orden_local)
+            
+            for i in range(max_intercambios):
+                if callback_progreso:
+                    msg_swap = f"Compresión {i+1}/{max_intercambios}"
+                    if caja_doblez:
+                        msg_swap += f" | Caja en X: {pos_x:.1f}"
+                    callback_progreso(msg_swap)
+                
+                import random
+                idx1, idx2 = random.sample(range(len(orden_base)), 2)
+                orden_mutado = list(orden_base)
+                orden_mutado[idx1], orden_mutado[idx2] = orden_mutado[idx2], orden_mutado[idx1]
+                
+                resultado_prueba = empaquetar_un_orden(orden_mutado, ancho_mesa, tolerancia_rot, paso_rot, valor_buffer, largo_maximo, caja_doblez, pos_x)
+                
+                if resultado_prueba is None:
+                    continue
+                
+                largo_prueba = max([p[0].bounds[3] for p in resultado_prueba]) if resultado_prueba else float('inf')
+                
+                if largo_prueba < mejor_largo_local:
+                    mejor_largo_local = largo_prueba
+                    mejor_orden_local = orden_mutado
+                    orden_base = orden_mutado
+                    
+                if largo_prueba < mejor_largo_global:
+                    mejor_largo_global = largo_prueba
+                    mejor_resultado_global = resultado_prueba
 
+    return mejor_resultado_global
 # ==========================================================
-# 4. LÓGICA DE NEGOCIO (DOBLEZ E HÍBRIDOS)
+# 4. LÓGICA DE NEGOCIO Y SUB-BLOQUES
 # ==========================================================
 def empaquetar_sub_bloque_doblez(piezas_doblez, ancho_mesa, tolerancia_rot, paso_rot, valor_buffer):
     if not piezas_doblez:
         return None, []
     
-    # 1. Empaquetamos los moldes verdaderos a tamaño real
+    # Empaquetamos los moldes verdaderos a tamaño real sin caja ni límite
     resultado_sub = optimizar_nesting_completo(piezas_doblez, ancho_mesa, tolerancia_rot, paso_rot, valor_buffer, n_ordenes_aleatorios=1, max_intercambios=0, callback_progreso=None)
     
     if not resultado_sub:
@@ -219,27 +306,8 @@ def empaquetar_sub_bloque_doblez(piezas_doblez, ancho_mesa, tolerancia_rot, paso
     ancho_caja = maxx - minx
     largo_caja_desdoblada = maxy - miny
     
-    # 2. LA MAGIA FÍSICA: Partimos la longitud de la caja por la mitad para la mesa principal.
-    # Al desdoblar este bloque en el taller, recuperará el 'largo_caja_desdoblada' real.
+    # Partimos la longitud de la caja por la mitad para la mesa principal.
     largo_caja_mesa = largo_caja_desdoblada / 2.0
     super_poligono = box(0, 0, ancho_caja, largo_caja_mesa)
     
     return (super_poligono, "CAJA COMPARTIDA / DOBLEZ"), resultado_sub
-
-def generar_molde_hibrido(poligono1, poligono2):
-    minx1, miny1, maxx1, maxy1 = poligono1.bounds
-    cx1, cy1 = (minx1 + maxx1) / 2.0, (miny1 + maxy1) / 2.0
-    
-    minx2, miny2, maxx2, maxy2 = poligono2.bounds
-    cx2, cy2 = (minx2 + maxx2) / 2.0, (miny2 + maxy2) / 2.0
-    
-    dx = cx1 - cx2
-    dy = cy1 - cy2
-    
-    poligono2_centrado = translate(poligono2, xoff=dx, yoff=dy)
-    molde_hibrido = unary_union([poligono1, poligono2_centrado])
-    
-    if molde_hibrido.geom_type == 'MultiPolygon':
-        molde_hibrido = max(molde_hibrido.geoms, key=lambda a: a.area)
-        
-    return molde_hibrido

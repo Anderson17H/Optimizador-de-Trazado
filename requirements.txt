@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+shapely
+pyclipper
+ezdxf
+python-multipart

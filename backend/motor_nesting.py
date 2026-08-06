@@ -116,6 +116,7 @@ def empaquetar_un_orden(piezas_ordenadas, ancho_mesa, tolerancia_cm, paso_rot, v
     for pieza_tupla in piezas_ordenadas:
         pieza = pieza_tupla[0]
         alias = pieza_tupla[1]
+        tolerancia_cm = pieza_tupla[2]
         
         mejor_y_global = float('inf')
         mejor_x_global = float('inf')

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESCARLÚ - Sistema de Producción</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased h-screen overflow-hidden">
+
+    <div id="app" class="flex h-full">
+
+        <!-- SIDEBAR (Panel Izquierdo de Navegación) -->
+        <aside class="w-64 bg-[#fdf2f4] border-r border-pink-100 flex flex-col shadow-sm z-20">
+            <!-- Zona del Logo -->
+            <div class="p-8 flex flex-col items-center border-b border-pink-200">
+                <!-- Aquí puedes poner la ruta de tu logo real en el src -->
+                <div class="w-20 h-20 bg-pink-200 rounded-full mb-3 flex items-center justify-center shadow-inner">
+                    <span class="text-pink-800 font-black text-xl">ESC</span>
+                </div>
+                <h1 class="text-xl font-bold tracking-widest text-gray-900">ESCARLÚ</h1>
+                <p class="text-xs text-gray-500 uppercase tracking-wider mt-1">Producción</p>
+            </div>
+            
+            <!-- Menú de Opciones -->
+            <nav class="flex-1 px-4 py-6 space-y-2">
+                <!-- Botón Optimizador -->
+                <button @click="vista_actual = 'optimizador'" 
+                        :class="vista_actual === 'optimizador' ? 'bg-[#f8d7da] text-gray-900 font-bold shadow-sm' : 'text-gray-600 hover:bg-pink-100'"
+                        class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left">
+                    <span>✂️</span> Optimizador de Trazado
+                </button>
+
+                <!-- Botón Digitalizador -->
+                <button @click="vista_actual = 'digitalizador'" 
+                        :class="vista_actual === 'digitalizador' ? 'bg-[#f8d7da] text-gray-900 font-bold shadow-sm' : 'text-gray-600 hover:bg-pink-100'"
+                        class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left">
+                    <span>📸</span> Digitalizador DXF
+                </button>
+
+                <!-- Botón Administrador -->
+                <button @click="vista_actual = 'administrar'" 
+                        :class="vista_actual === 'administrar' ? 'bg-[#f8d7da] text-gray-900 font-bold shadow-sm' : 'text-gray-600 hover:bg-pink-100'"
+                        class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left">
+                    <span>⚙️</span> Ajustes / Moldes
+                </button>
+            </nav>
+
+            <!-- Usuario al fondo -->
+            <div class="p-4 border-t border-pink-200 text-sm text-gray-500 flex items-center gap-2">
+                <div class="w-8 h-8 bg-gray-300 rounded-full"></div>
+                <span>Administrador</span>
+            </div>
+        </aside>
+
+        <!-- MAIN (Área de Contenido Derecha) -->
+        <main class="flex-1 flex flex-col h-full bg-gray-50 relative overflow-hidden">
+            
+            <!-- VISTA 1: EL OPTIMIZADOR (El código que ya teníamos) -->
+            <div v-show="vista_actual === 'optimizador'" class="flex h-full w-full">
+                
+                <!-- Panel del Visor (Izquierda dentro del optimizador) -->
+                <div class="w-2/3 bg-white flex flex-col border-r border-gray-200 shadow-lg z-10">
+                    <header class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+                        <h2 class="text-xl font-bold text-gray-800">Mesa de Corte Virtual</h2>
+                        <div class="text-sm px-3 py-1 rounded-full border" :class="optimizando ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-green-50 text-green-700 border-green-200'">
+                            Estado: <span class="font-semibold">{{ estado_sistema }}</span>
+                        </div>
+                    </header>
+                    
+                    <div class="flex-1 p-8 flex flex-col items-center justify-center bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CjxyZWN0IHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0ibm9uZSIvPgo8Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIxIiBmaWxsPSIjZTElMTIxIi8+Cjwvc3ZnPg==')]">
+                        
+                        <!-- Pantallas de estado del motor -->
+                        <div v-if="!optimizando && !resultado_final" class="text-center text-gray-400">
+                            <p class="text-lg">Agrega modelos al carrito y presiona Optimizar</p>
+                        </div>
+
+                        <div v-if="optimizando" class="text-center bg-white p-8 rounded-xl shadow-xl border border-gray-200">
+                            <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-[#f8d7da] mx-auto mb-6"></div>
+                            <h2 class="text-2xl font-bold text-gray-800 mb-2">Motor Trabajando</h2>
+                            <p class="text-pink-700 font-semibold text-lg">{{ progreso_actual }}</p>
+                        </div>
+
+                        <div v-if="resultado_final && !optimizando" class="w-full">
+                            <div class="bg-white border-l-8 border-green-500 p-6 rounded shadow-lg">
+                                <h2 class="text-3xl font-black text-gray-800 mb-4">¡Tizado Optimizado!</h2>
+                                <div class="grid grid-cols-3 gap-6 text-center">
+                                    <div class="bg-gray-50 p-4 rounded border">
+                                        <p class="text-gray-500 text-sm font-bold uppercase">Largo Utilizado</p>
+                                        <p class="text-3xl font-black text-gray-800">{{ resultado_final.largo_cm }} cm</p>
+                                    </div>
+                                    <div class="bg-gray-50 p-4 rounded border">
+                                        <p class="text-gray-500 text-sm font-bold uppercase">Eficiencia</p>
+                                        <p class="text-3xl font-black text-blue-600">{{ resultado_final.eficiencia }} %</p>
+                                    </div>
+                                    <div class="bg-gray-50 p-4 rounded border">
+                                        <p class="text-gray-500 text-sm font-bold uppercase">Tiempo</p>
+                                        <p class="text-3xl font-black text-gray-800">{{ resultado_final.tiempo_seg }} s</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel de Controles (Derecha dentro del optimizador) -->
+                <div class="w-1/3 bg-gray-50 flex flex-col h-full overflow-y-auto">
+                    <div class="p-6">
+                        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 mb-6">
+                            <h3 class="font-bold text-gray-800 mb-4">1. Parámetros del Rollo</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Ancho (cm)</label>
+                                    <input type="number" v-model="ancho_mesa" class="w-full border-gray-300 rounded bg-gray-50 p-2 border focus:border-pink-300 focus:ring-0">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Largo Max</label>
+                                    <input type="number" v-model="largo_mesa" class="w-full border-gray-300 rounded bg-gray-50 p-2 border focus:border-pink-300 focus:ring-0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 mb-6">
+                            <h3 class="font-bold text-gray-800 mb-4">2. Agregar al Tizado</h3>
+                            <div class="mb-4">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Categoría</label>
+                                <select v-model="tipo_seleccionado" @change="modelo_seleccionado = ''" class="w-full border-gray-300 rounded bg-gray-50 p-2 border mb-3">
+                                    <option disabled value="">-- Elige un tipo --</option>
+                                    <option value="polo">Polo</option>
+                                    <option value="short">Short</option>
+                                    <option value="chompa">Chompa</option>
+                                    <option value="buzo">Buzo</option>
+                                </select>
+
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Modelo exacto</label>
+                                <select v-model="modelo_seleccionado" :disabled="!tipo_seleccionado" class="w-full border-gray-300 rounded bg-gray-50 p-2 border disabled:bg-gray-200">
+                                    <option disabled value="">-- Selecciona el modelo --</option>
+                                    <option v-for="(datos, id) in modelos_filtrados" :key="id" :value="id">{{ datos.nombre }}</option>
+                                </select>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="w-1/2">
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Prendas</label>
+                                    <input type="number" min="1" v-model="cantidad_seleccionada" class="w-full border-gray-300 rounded bg-gray-50 p-2 border">
+                                </div>
+                                <div class="w-1/2 flex items-end">
+                                    <button @click="agregarPedido" :disabled="!modelo_seleccionado" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-2 px-4 rounded disabled:bg-gray-300">
+                                        + Añadir
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 mb-6">
+                            <h3 class="font-bold text-gray-800 mb-4">3. Lista de Pedidos</h3>
+                            <div v-if="lista_pedidos.length === 0" class="text-sm text-gray-400 italic text-center p-4 border-2 border-dashed rounded">
+                                Vacío.
+                            </div>
+                            <div v-else class="space-y-4">
+                                <div v-for="(pedido, index) in lista_pedidos" :key="pedido.id_unico" class="border border-pink-200 rounded p-3 bg-[#fff0f2]">
+                                    <div class="flex justify-between items-center font-bold text-gray-800 mb-3 border-b border-pink-200 pb-2">
+                                        <span>{{ pedido.nombre }} (x{{ pedido.cantidad }})</span>
+                                        <button @click="eliminarPedido(index)" class="text-red-500 text-xs font-bold uppercase">Quitar</button>
+                                    </div>
+                                    <div class="text-sm space-y-2">
+                                        <p class="font-semibold text-[10px] text-gray-500 uppercase">Tolerancia de Aplome (cm):</p>
+                                        <div v-for="molde in pedido.ajustes_moldes" :key="molde.molde_id" class="flex justify-between items-center bg-white p-2 rounded shadow-sm">
+                                            <span class="font-mono text-xs">{{ molde.molde_id }}</span>
+                                            <input type="number" step="0.5" min="0" v-model="molde.tolerancia_cm" class="w-16 border rounded p-1 text-right text-xs">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button @click="iniciarOptimizacion" :disabled="optimizando || lista_pedidos.length === 0" class="w-full bg-[#e8a3a9] hover:bg-[#d6858c] text-white font-black text-lg py-4 px-6 rounded-xl shadow uppercase tracking-wider disabled:bg-gray-300 transition-colors">
+                            {{ optimizando ? 'Calculando...' : 'Optimizar Trazado' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VISTA 2: EL DIGITALIZADOR (En construcción) -->
+            <div v-show="vista_actual === 'digitalizador'" class="h-full w-full flex flex-col p-8 overflow-y-auto">
+                <header class="mb-8">
+                    <h2 class="text-3xl font-black text-gray-800">Digitalizador de Moldes</h2>
+                    <p class="text-gray-500 mt-2">Convierte fotografías de patrones físicos a formato DXF.</p>
+                </header>
+                <div class="flex-1 border-4 border-dashed border-gray-300 rounded-2xl flex items-center justify-center bg-white">
+                    <p class="text-gray-400 font-bold text-xl">Módulo en integración...</p>
+                </div>
+            </div>
+
+            <!-- VISTA 3: ADMINISTRADOR DE MOLDES (En construcción) -->
+            <div v-show="vista_actual === 'administrar'" class="h-full w-full flex flex-col p-8 overflow-y-auto">
+                <header class="mb-8">
+                    <h2 class="text-3xl font-black text-gray-800">Administración de Base de Datos</h2>
+                    <p class="text-gray-500 mt-2">Carga nuevos archivos DXF y arma las recetas de los modelos.</p>
+                </header>
+                <div class="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+                    <!-- Aquí irá el formulario para crear modelos -->
+                    <p class="text-gray-400 font-bold text-xl text-center mt-20">Formulario de Configuración Próximamente...</p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- LÓGICA VUE (Sin cambios, solo añadimos la variable vista_actual) -->
+    <script>
+        const { createApp, ref, onMounted, computed } = Vue
+
+        createApp({
+            setup() {
+                // --- NUEVO: Control de Vistas ---
+                const vista_actual = ref('optimizador')
+
+                const estado_sistema = ref('En espera')
+                const ancho_mesa = ref(150.0)
+                const largo_mesa = ref(500.0)
+                
+                const modelos_disponibles = ref({})
+                const tipo_seleccionado = ref('')
+                const modelo_seleccionado = ref('')
+                const cantidad_seleccionada = ref(1)
+
+                const modelos_filtrados = computed(() => {
+                    const filtrados = {}
+                    for (const id in modelos_disponibles.value) {
+                        if (modelos_disponibles.value[id].tipo === tipo_seleccionado.value) {
+                            filtrados[id] = modelos_disponibles.value[id]
+                        }
+                    }
+                    return filtrados
+                })
+
+                const cargarModelos = async () => {
+                    try {
+                        const respuesta = await fetch('http://localhost:8000/api/modelos')
+                        if (respuesta.ok) {
+                            modelos_disponibles.value = await respuesta.json()
+                        }
+                    } catch (error) {
+                        console.error("No se pudo conectar", error)
+                        estado_sistema.value = 'Sin conexión'
+                    }
+                }
+
+                onMounted(() => { cargarModelos() })
+                
+                const lista_pedidos = ref([])
+
+                const agregarPedido = () => {
+                    if (!modelo_seleccionado.value) return;
+                    const infoModelo = modelos_disponibles.value[modelo_seleccionado.value];
+                    const nuevoPedido = {
+                        id_unico: Date.now(),
+                        modelo_id: modelo_seleccionado.value,
+                        nombre: infoModelo.nombre,
+                        cantidad: cantidad_seleccionada.value,
+                        ajustes_moldes: infoModelo.receta.map(item => ({
+                            molde_id: item.molde_id,
+                            tolerancia_cm: 1.0 
+                        }))
+                    };
+                    lista_pedidos.value.push(nuevoPedido);
+                }
+
+                const eliminarPedido = (index) => { lista_pedidos.value.splice(index, 1); }
+
+                const optimizando = ref(false)
+                const progreso_actual = ref('')
+                const resultado_final = ref(null)
+
+                const consultarProgreso = async (job_id) => {
+                    try {
+                        const respuesta = await fetch(`http://localhost:8000/api/estado/${job_id}`)
+                        const data = await respuesta.json()
+                        progreso_actual.value = data.progreso || 'Procesando...'
+
+                        if (data.estado === 'completado') {
+                            estado_sistema.value = '¡Completado!'
+                            resultado_final.value = data.resultado
+                            optimizando.value = false
+                        } else if (data.estado === 'error') {
+                            estado_sistema.value = 'Error'
+                            progreso_actual.value = 'Error: ' + data.detalle
+                            optimizando.value = false
+                        } else {
+                            setTimeout(() => consultarProgreso(job_id), 3000)
+                        }
+                    } catch (error) {
+                        setTimeout(() => consultarProgreso(job_id), 3000)
+                    }
+                }
+
+                const iniciarOptimizacion = async () => {
+                    optimizando.value = true
+                    estado_sistema.value = 'Calculando...'
+                    progreso_actual.value = 'Conectando...'
+                    resultado_final.value = null
+
+                    const payload = {
+                        ancho_mesa: ancho_mesa.value,
+                        largo_mesa: largo_mesa.value,
+                        pedidos: lista_pedidos.value
+                    }
+
+                    try {
+                        const respuesta = await fetch('http://localhost:8000/api/optimizar', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        })
+                        if (!respuesta.ok) throw new Error("Error en petición")
+                        const data = await respuesta.json()
+                        consultarProgreso(data.job_id)
+                    } catch (error) {
+                        estado_sistema.value = 'Error'
+                        progreso_actual.value = error.message
+                        optimizando.value = false
+                    }
+                }
+
+                return {
+                    vista_actual, // Exportamos la variable que controla el menú
+                    estado_sistema, ancho_mesa, largo_mesa, modelos_disponibles,
+                    tipo_seleccionado, modelos_filtrados, modelo_seleccionado,
+                    cantidad_seleccionada, lista_pedidos, agregarPedido, eliminarPedido,
+                    optimizando, progreso_actual, resultado_final, iniciarOptimizacion
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>

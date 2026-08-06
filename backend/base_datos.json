@@ -1,0 +1,13 @@
+{
+  "moldes": {
+    "DXF-001": {"alias": "Delantero_Prueba", "ruta": "../almacen_dxf/delantero.dxf"}
+  },
+  "modelos": {
+    "MOD-001": {
+      "nombre": "Prenda de Prueba Talla M",
+      "receta": [
+        {"molde_id": "DXF-001", "cantidad_por_prenda": 1}
+      ]
+    }
+  }
+}

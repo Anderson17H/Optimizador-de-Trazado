@@ -21,6 +21,7 @@ class PiezaTipo:
     poligono: Polygon
     cantidad_necesaria: float
     es_pieza_grande: bool = False
+    tolerancia_cm: float = 1.0
 
 @dataclass
 class ResultadoOptimizacionDoblez:
@@ -89,12 +90,12 @@ def optimizar_doblez(
         fraccion = round(p.cantidad_necesaria % 1, 3)
 
         if parte_entera > 0:
-            flat_resto.extend([(p.poligono, p.alias)] * int(parte_entera))
+            # Agregamos p.tolerancia_cm a la tupla
+            flat_resto.extend([(p.poligono, p.alias, p.tolerancia_cm)] * int(parte_entera))
         
         if fraccion > 0:
-            # Multiplicamos la fracción por 2 para generar la pieza completa desdoblada
             cantidad_en_caja = int(round(fraccion * 2))
-            flat_doblez.extend([(p.poligono, p.alias)] * cantidad_en_caja)
+            flat_doblez.extend([(p.poligono, p.alias, p.tolerancia_cm)] * cantidad_en_caja)
 
     piezas_doblez_internas_final = None
     id_caja = None

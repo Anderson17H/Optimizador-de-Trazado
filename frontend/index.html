@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ESCARLÚ - Sistema de Producción</title>
+    <!-- Tailwind CSS para el diseño -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue 3 para la lógica interactiva -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased h-screen overflow-hidden">
@@ -15,7 +17,6 @@
         <aside class="w-64 bg-[#fdf2f4] border-r border-pink-100 flex flex-col shadow-sm z-20">
             <!-- Zona del Logo -->
             <div class="p-8 flex flex-col items-center border-b border-pink-200">
-                <!-- Aquí puedes poner la ruta de tu logo real en el src -->
                 <div class="w-20 h-20 bg-pink-200 rounded-full mb-3 flex items-center justify-center shadow-inner">
                     <span class="text-pink-800 font-black text-xl">ESC</span>
                 </div>
@@ -25,21 +26,18 @@
             
             <!-- Menú de Opciones -->
             <nav class="flex-1 px-4 py-6 space-y-2">
-                <!-- Botón Optimizador -->
                 <button @click="vista_actual = 'optimizador'" 
                         :class="vista_actual === 'optimizador' ? 'bg-[#f8d7da] text-gray-900 font-bold shadow-sm' : 'text-gray-600 hover:bg-pink-100'"
                         class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left">
                     <span>✂️</span> Optimizador de Trazado
                 </button>
 
-                <!-- Botón Digitalizador -->
                 <button @click="vista_actual = 'digitalizador'" 
                         :class="vista_actual === 'digitalizador' ? 'bg-[#f8d7da] text-gray-900 font-bold shadow-sm' : 'text-gray-600 hover:bg-pink-100'"
                         class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left">
                     <span>📸</span> Digitalizador DXF
                 </button>
 
-                <!-- Botón Administrador -->
                 <button @click="vista_actual = 'administrar'" 
                         :class="vista_actual === 'administrar' ? 'bg-[#f8d7da] text-gray-900 font-bold shadow-sm' : 'text-gray-600 hover:bg-pink-100'"
                         class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left">
@@ -49,7 +47,7 @@
 
             <!-- Usuario al fondo -->
             <div class="p-4 border-t border-pink-200 text-sm text-gray-500 flex items-center gap-2">
-                <div class="w-8 h-8 bg-gray-300 rounded-full"></div>
+                <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-white font-bold">A</div>
                 <span>Administrador</span>
             </div>
         </aside>
@@ -57,10 +55,12 @@
         <!-- MAIN (Área de Contenido Derecha) -->
         <main class="flex-1 flex flex-col h-full bg-gray-50 relative overflow-hidden">
             
-            <!-- VISTA 1: EL OPTIMIZADOR (El código que ya teníamos) -->
+            <!-- ========================================== -->
+            <!-- VISTA 1: EL OPTIMIZADOR                    -->
+            <!-- ========================================== -->
             <div v-show="vista_actual === 'optimizador'" class="flex h-full w-full">
                 
-                <!-- Panel del Visor (Izquierda dentro del optimizador) -->
+                <!-- Panel del Visor (Izquierda) -->
                 <div class="w-2/3 bg-white flex flex-col border-r border-gray-200 shadow-lg z-10">
                     <header class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
                         <h2 class="text-xl font-bold text-gray-800">Mesa de Corte Virtual</h2>
@@ -69,42 +69,64 @@
                         </div>
                     </header>
                     
-                    <div class="flex-1 p-8 flex flex-col items-center justify-center bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CjxyZWN0IHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0ibm9uZSIvPgo8Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIxIiBmaWxsPSIjZTElMTIxIi8+Cjwvc3ZnPg==')]">
+                    <div class="flex-1 p-8 flex flex-col items-center justify-center bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CjxyZWN0IHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0ibm9uZSIvPgo8Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIxIiBmaWxsPSIjZTElMTIxIi8+Cjwvc3ZnPg==')] overflow-y-auto">
                         
-                        <!-- Pantallas de estado del motor -->
+                        <!-- Estado 1: En Espera -->
                         <div v-if="!optimizando && !resultado_final" class="text-center text-gray-400">
-                            <p class="text-lg">Agrega modelos al carrito y presiona Optimizar</p>
+                            <p class="text-lg font-semibold">Agrega modelos al carrito y presiona Optimizar</p>
                         </div>
 
-                        <div v-if="optimizando" class="text-center bg-white p-8 rounded-xl shadow-xl border border-gray-200">
-                            <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-[#f8d7da] mx-auto mb-6"></div>
-                            <h2 class="text-2xl font-bold text-gray-800 mb-2">Motor Trabajando</h2>
-                            <p class="text-pink-700 font-semibold text-lg">{{ progreso_actual }}</p>
+                        <!-- Estado 2: Calculando (Barra de progreso) -->
+                        <div v-if="optimizando" class="w-3/4 bg-white p-8 rounded-xl shadow-xl border border-gray-200 text-center">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-6">Procesando Trazado...</h2>
+                            
+                            <!-- Barra animada -->
+                            <div class="w-full bg-gray-200 rounded-full h-4 mb-4 overflow-hidden relative">
+                                <div class="absolute top-0 left-0 h-4 bg-[#f8d7da] w-full animate-pulse"></div>
+                                <!-- Efecto de carga indeterminada -->
+                                <div class="absolute top-0 left-0 h-4 bg-pink-500 w-1/3 animate-[bounce_1s_infinite_linear] rounded-full"></div>
+                            </div>
+                            
+                            <p class="text-pink-700 font-bold text-lg uppercase tracking-wide">{{ progreso_actual }}</p>
                         </div>
 
-                        <div v-if="resultado_final && !optimizando" class="w-full">
-                            <div class="bg-white border-l-8 border-green-500 p-6 rounded shadow-lg">
-                                <h2 class="text-3xl font-black text-gray-800 mb-4">¡Tizado Optimizado!</h2>
-                                <div class="grid grid-cols-3 gap-6 text-center">
-                                    <div class="bg-gray-50 p-4 rounded border">
-                                        <p class="text-gray-500 text-sm font-bold uppercase">Largo Utilizado</p>
-                                        <p class="text-3xl font-black text-gray-800">{{ resultado_final.largo_cm }} cm</p>
+                        <!-- Estado 3: Resultados y Gráficos -->
+                        <div v-if="resultado_final && !optimizando" class="w-full h-full flex flex-col">
+                            
+                            <!-- Etiqueta de Eficiencia Superior -->
+                            <div class="bg-gray-900 text-white rounded-xl shadow-lg p-5 mb-6 flex justify-between items-center w-full">
+                                <div>
+                                    <h2 class="text-2xl font-black tracking-wider text-pink-300">TIZADO COMPLETADO</h2>
+                                    <p class="text-gray-400 text-sm mt-1">Tiempo de cálculo: {{ resultado_final.tiempo_seg }}s</p>
+                                </div>
+                                <div class="flex gap-4">
+                                    <div class="bg-gray-800 border border-gray-700 px-4 py-2 rounded-lg text-center">
+                                        <p class="text-xs text-gray-400 uppercase font-bold">Largo Utilizado</p>
+                                        <p class="text-xl font-bold">{{ resultado_final.largo_cm }} cm</p>
                                     </div>
-                                    <div class="bg-gray-50 p-4 rounded border">
-                                        <p class="text-gray-500 text-sm font-bold uppercase">Eficiencia</p>
-                                        <p class="text-3xl font-black text-blue-600">{{ resultado_final.eficiencia }} %</p>
-                                    </div>
-                                    <div class="bg-gray-50 p-4 rounded border">
-                                        <p class="text-gray-500 text-sm font-bold uppercase">Tiempo</p>
-                                        <p class="text-3xl font-black text-gray-800">{{ resultado_final.tiempo_seg }} s</p>
+                                    <div class="bg-pink-600 px-4 py-2 rounded-lg text-center shadow-inner">
+                                        <p class="text-xs text-pink-200 uppercase font-bold">Eficiencia Textil</p>
+                                        <p class="text-2xl font-black">{{ resultado_final.eficiencia }} %</p>
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Contenedor de las Imágenes generadas -->
+                            <div class="flex-1 w-full space-y-6">
+                                <div v-for="(img_base64, index) in resultado_final.imagenes" :key="index" class="bg-white border-2 border-dashed border-gray-300 p-4 rounded-xl shadow-sm relative">
+                                    <span class="absolute -top-3 left-4 bg-white px-2 text-xs font-bold text-gray-500 uppercase">
+                                        {{ resultado_final.imagenes.length > 1 && index === 0 ? 'Trazo 1 (Caja / Doblez)' : (resultado_final.imagenes.length > 1 ? 'Trazo 2 (Resto)' : 'Trazo Único') }}
+                                    </span>
+                                    <!-- Aquí se inyecta la imagen desde el backend -->
+                                    <img :src="img_base64" class="w-full h-auto object-contain bg-gray-50" alt="Gráfico del trazo">
+                                </div>
+                            </div>
                         </div>
+
                     </div>
                 </div>
 
-                <!-- Panel de Controles (Derecha dentro del optimizador) -->
+                <!-- Panel de Controles (Derecha) -->
                 <div class="w-1/3 bg-gray-50 flex flex-col h-full overflow-y-auto">
                     <div class="p-6">
                         <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 mb-6">
@@ -181,7 +203,9 @@
                 </div>
             </div>
 
-            <!-- VISTA 2: EL DIGITALIZADOR (En construcción) -->
+            <!-- ========================================== -->
+            <!-- VISTA 2: EL DIGITALIZADOR                  -->
+            <!-- ========================================== -->
             <div v-show="vista_actual === 'digitalizador'" class="h-full w-full flex flex-col p-8 overflow-y-auto">
                 <header class="mb-8">
                     <h2 class="text-3xl font-black text-gray-800">Digitalizador de Moldes</h2>
@@ -192,30 +216,99 @@
                 </div>
             </div>
 
-            <!-- VISTA 3: ADMINISTRADOR DE MOLDES (En construcción) -->
+            <!-- ========================================== -->
+            <!-- VISTA 3: ADMINISTRADOR DE MOLDES           -->
+            <!-- ========================================== -->
             <div v-show="vista_actual === 'administrar'" class="h-full w-full flex flex-col p-8 overflow-y-auto">
                 <header class="mb-8">
                     <h2 class="text-3xl font-black text-gray-800">Administración de Base de Datos</h2>
                     <p class="text-gray-500 mt-2">Carga nuevos archivos DXF y arma las recetas de los modelos.</p>
                 </header>
-                <div class="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-                    <!-- Aquí irá el formulario para crear modelos -->
-                    <p class="text-gray-400 font-bold text-xl text-center mt-20">Formulario de Configuración Próximamente...</p>
+                
+                <div class="grid grid-cols-2 gap-8 flex-1">
+                    
+                    <!-- Tarjeta Izquierda: Subir Moldes DXF -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col h-min">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">1. Subir Nuevo Molde (DXF)</h3>
+                        
+                        <div class="mb-6">
+                            <label class="block text-sm font-bold text-gray-600 mb-1">Archivo de AutoCAD (.dxf)</label>
+                            <input type="file" @change="capturarArchivo" accept=".dxf" class="w-full border border-gray-300 rounded p-2 text-sm bg-gray-50 focus:outline-none">
+                        </div>
+                        
+                        <button @click="subirMolde" :disabled="!archivo_dxf" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">
+                            ⬆️ Guardar Molde
+                        </button>
+                        <p v-if="mensaje_molde" class="mt-3 text-sm font-bold text-green-600 text-center bg-green-50 py-1 rounded">{{ mensaje_molde }}</p>
+                    </div>
+
+                    <!-- Tarjeta Derecha: Crear Modelo (Receta) -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">2. Crear Nuevo Modelo (Receta)</h3>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-600 mb-1">Categoría</label>
+                                <select v-model="nuevo_modelo_tipo" class="w-full border border-gray-300 rounded p-2 focus:border-pink-300">
+                                    <option disabled value="">Seleccionar...</option>
+                                    <option value="polo">Polo</option>
+                                    <option value="short">Short</option>
+                                    <option value="chompa">Chompa</option>
+                                    <option value="buzo">Buzo</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-600 mb-1">Nombre (con Talla)</label>
+                                <input type="text" v-model="nuevo_modelo_nombre" placeholder="Ej: Polo V - Talla M" class="w-full border border-gray-300 rounded p-2 focus:border-pink-300">
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 p-4 rounded border mb-4 flex-1">
+                            <h4 class="font-bold text-sm text-gray-700 mb-2">Añadir piezas a la receta</h4>
+                            
+                            <div class="flex gap-2 mb-4">
+                                <!-- Desplegable automático de moldes guardados -->
+                                <select v-model="molde_id_temp" class="w-1/2 border border-gray-300 rounded p-2 text-sm focus:border-pink-300">
+                                    <option disabled value="">-- Elegir Pieza --</option>
+                                    <option v-for="(info, id) in moldes_disponibles" :key="id" :value="id">
+                                        {{ info.alias }}
+                                    </option>
+                                </select>
+
+                                <input type="number" v-model="cantidad_molde_temp" min="1" placeholder="Cant." class="w-1/4 border border-gray-300 rounded p-2 text-sm focus:border-pink-300">
+                                <button @click="agregarMoldeReceta" :disabled="!molde_id_temp" class="w-1/4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-bold rounded text-sm transition-colors">+</button>
+                            </div>
+                            
+                            <ul class="text-sm space-y-2">
+                                <li v-if="receta_temporal.length === 0" class="text-gray-400 italic text-center py-2">No hay piezas añadidas.</li>
+                                <li v-for="(item, index) in receta_temporal" :key="index" class="flex justify-between items-center bg-white p-2 border rounded shadow-sm">
+                                    <span class="font-mono font-semibold">{{ item.molde_id }} <span class="text-gray-500 font-sans font-normal">(x{{ item.cantidad_por_prenda }})</span></span>
+                                    <button @click="receta_temporal.splice(index, 1)" class="text-red-500 font-bold hover:text-red-700">Quitar</button>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <button @click="crearModelo" :disabled="!nuevo_modelo_tipo || !nuevo_modelo_nombre || receta_temporal.length === 0" class="w-full bg-[#e8a3a9] hover:bg-[#d6858c] text-white font-black text-lg py-4 rounded-xl shadow transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">
+                            💾 Guardar Nuevo Modelo
+                        </button>
+                        <p v-if="mensaje_modelo" class="mt-3 text-sm font-bold text-green-600 text-center bg-green-50 py-1 rounded">{{ mensaje_modelo }}</p>
+                    </div>
+
                 </div>
             </div>
 
         </main>
     </div>
 
-    <!-- LÓGICA VUE (Sin cambios, solo añadimos la variable vista_actual) -->
+    <!-- LÓGICA VUE -->
     <script>
         const { createApp, ref, onMounted, computed } = Vue
 
         createApp({
             setup() {
-                // --- NUEVO: Control de Vistas ---
                 const vista_actual = ref('optimizador')
 
+                // --- ESTADOS OPTIMIZADOR ---
                 const estado_sistema = ref('En espera')
                 const ancho_mesa = ref(150.0)
                 const largo_mesa = ref(500.0)
@@ -247,7 +340,24 @@
                     }
                 }
 
-                onMounted(() => { cargarModelos() })
+                // --- ESTADOS MOLDES GLOBALES ---
+                const moldes_disponibles = ref({})
+                
+                const cargarMoldes = async () => {
+                    try {
+                        const respuesta = await fetch('http://localhost:8000/api/moldes')
+                        if (respuesta.ok) {
+                            moldes_disponibles.value = await respuesta.json()
+                        }
+                    } catch (error) {
+                        console.error("Error al cargar piezas", error)
+                    }
+                }
+
+                onMounted(() => { 
+                    cargarModelos();
+                    cargarMoldes(); 
+                })
                 
                 const lista_pedidos = ref([])
 
@@ -323,12 +433,102 @@
                     }
                 }
 
+                // --- ESTADOS ADMINISTRADOR DE MOLDES ---
+                const archivo_dxf = ref(null)
+                const mensaje_molde = ref('')
+
+                const capturarArchivo = (event) => {
+                    archivo_dxf.value = event.target.files[0]
+                }
+
+                const subirMolde = async () => {
+                    if (!archivo_dxf.value) return;
+                    
+                    const formData = new FormData();
+                    formData.append("archivo", archivo_dxf.value);
+                    
+                    try {
+                        const respuesta = await fetch('http://localhost:8000/api/moldes/subir', {
+                            method: 'POST',
+                            body: formData 
+                        });
+                        
+                        if (!respuesta.ok) throw new Error("Error al subir");
+                        
+                        const data = await respuesta.json();
+                        mensaje_molde.value = `¡Pieza guardada: ${data.molde_id}!`;
+                        
+                        archivo_dxf.value = null;
+                        document.querySelector('input[type="file"]').value = '';
+                        setTimeout(() => mensaje_molde.value = '', 4000);
+                        
+                        cargarMoldes(); 
+                        
+                    } catch (error) {
+                        mensaje_molde.value = "Error al subir archivo.";
+                        console.error(error);
+                    }
+                }
+
+                const nuevo_modelo_tipo = ref('')
+                const nuevo_modelo_nombre = ref('')
+                const molde_id_temp = ref('')
+                const cantidad_molde_temp = ref(1)
+                const receta_temporal = ref([])
+                const mensaje_modelo = ref('')
+
+                const agregarMoldeReceta = () => {
+                    if (molde_id_temp.value && cantidad_molde_temp.value > 0) {
+                        receta_temporal.value.push({
+                            molde_id: molde_id_temp.value.trim(), 
+                            cantidad_por_prenda: cantidad_molde_temp.value
+                        });
+                        molde_id_temp.value = '';
+                        cantidad_molde_temp.value = 1;
+                    }
+                }
+
+                const crearModelo = async () => {
+                    const payload = {
+                        tipo: nuevo_modelo_tipo.value,
+                        nombre: nuevo_modelo_nombre.value,
+                        receta: receta_temporal.value
+                    };
+
+                    try {
+                        const respuesta = await fetch('http://localhost:8000/api/modelos/crear', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        
+                        if (!respuesta.ok) throw new Error("Error al crear");
+                        
+                        const data = await respuesta.json();
+                        mensaje_modelo.value = `¡Modelo creado! ID: ${data.modelo_id}`;
+                        
+                        nuevo_modelo_tipo.value = '';
+                        nuevo_modelo_nombre.value = '';
+                        receta_temporal.value = [];
+                        setTimeout(() => mensaje_modelo.value = '', 5000);
+                        
+                        cargarModelos();
+                        
+                    } catch (error) {
+                        mensaje_modelo.value = "Error al guardar el modelo.";
+                        console.error(error);
+                    }
+                }
+
                 return {
-                    vista_actual, // Exportamos la variable que controla el menú
+                    vista_actual,
                     estado_sistema, ancho_mesa, largo_mesa, modelos_disponibles,
                     tipo_seleccionado, modelos_filtrados, modelo_seleccionado,
                     cantidad_seleccionada, lista_pedidos, agregarPedido, eliminarPedido,
-                    optimizando, progreso_actual, resultado_final, iniciarOptimizacion
+                    optimizando, progreso_actual, resultado_final, iniciarOptimizacion,
+                    moldes_disponibles, archivo_dxf, mensaje_molde, capturarArchivo, subirMolde,
+                    nuevo_modelo_tipo, nuevo_modelo_nombre, molde_id_temp, cantidad_molde_temp,
+                    receta_temporal, mensaje_modelo, agregarMoldeReceta, crearModelo
                 }
             }
         }).mount('#app')

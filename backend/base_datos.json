@@ -1,13 +1,77 @@
 {
-  "moldes": {
-    "DXF-001": {"alias": "Delantero_Prueba", "ruta": "../almacen_dxf/delantero.dxf"}
-  },
-  "modelos": {
-    "MOD-001": {
-      "nombre": "Prenda de Prueba Talla M",
-      "receta": [
-        {"molde_id": "DXF-001", "cantidad_por_prenda": 1}
-      ]
+    "moldes": {
+        "DXF-001": {
+            "alias": "Delantero_Prueba",
+            "ruta": "../almacen_dxf/delantero.dxf"
+        },
+        "DXF-002": {
+            "alias": "Delantero Camisero L",
+            "ruta": "../almacen_dxf/Delantero Camisero L.dxf"
+        },
+        "Delantero Corazon L": {
+            "alias": "Delantero Corazon L",
+            "ruta": "../almacen_dxf/Delantero Corazon L.dxf"
+        },
+        "Espalda Corazon L": {
+            "alias": "Espalda Corazon L",
+            "ruta": "../almacen_dxf/Espalda Corazon L.dxf"
+        },
+        "Manga Corta L": {
+            "alias": "Manga Corta L",
+            "ruta": "../almacen_dxf/Manga Corta L.dxf"
+        }
+    },
+    "modelos": {
+        "MOD-001": {
+            "nombre": "Prenda de Prueba Talla M",
+            "receta": [
+                {
+                    "molde_id": "DXF-001",
+                    "cantidad_por_prenda": 1
+                }
+            ]
+        },
+        "MOD-002": {
+            "tipo": "polo",
+            "nombre": "Camisero ",
+            "receta": [
+                {
+                    "molde_id": "DXF-002",
+                    "cantidad_por_prenda": 2
+                }
+            ]
+        },
+        "MOD-003": {
+            "tipo": "polo",
+            "nombre": "Camisero",
+            "receta": [
+                {
+                    "molde_id": "DXF-002",
+                    "cantidad_por_prenda": 1
+                },
+                {
+                    "molde_id": "DXF-001",
+                    "cantidad_por_prenda": 2
+                }
+            ]
+        },
+        "MOD-004": {
+            "tipo": "polo",
+            "nombre": "Corazón MC L",
+            "receta": [
+                {
+                    "molde_id": "Delantero Corazon L",
+                    "cantidad_por_prenda": 2
+                },
+                {
+                    "molde_id": "Espalda Corazon L",
+                    "cantidad_por_prenda": 1
+                },
+                {
+                    "molde_id": "Manga Corta L",
+                    "cantidad_por_prenda": 2
+                }
+            ]
+        }
     }
-  }
 }

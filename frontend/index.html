@@ -3,367 +3,513 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESCARLÚ - Sistema de Producción</title>
-    <!-- Tailwind CSS para el diseño -->
+    <title>ESCARLÚ Studio - Producción</title>
+    
+    <!-- Tipografías Oficiales ESCARLÚ Studio -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Montserrat:wght@400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Vue 3 para la lógica interactiva -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: 'var(--color-primary)',
+                        secondary: 'var(--color-secondary)',
+                        gold: 'var(--color-gold)',
+                        goldLight: 'var(--color-gold-light)',
+                        pinkMain: 'var(--color-pink)',
+                        pinkSoft: 'var(--color-pink-soft)',
+                        bgMain: 'var(--color-background)',
+                    },
+                    fontFamily: {
+                        sans: ['Montserrat', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    boxShadow: {
+                        'xs': '0 2px 8px rgba(0,0,0,.05)',
+                        'm': '0 10px 30px rgba(0,0,0,.08)',
+                        'xl': '0 20px 60px rgba(0,0,0,.12)',
+                        'glow': '0 15px 40px rgba(200,163,89,.35)',
+                    },
+                    spacing: {
+                        '1': '4px', '2': '8px', '4': '16px', '6': '24px', 
+                        '8': '32px', '12': '48px', '16': '64px', '24': '96px',
+                        'sidebar': '288px'
+                    },
+                    borderRadius: {
+                        '4xl': '32px',
+                        '2xl': '18px',
+                        'xl': '14px',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Vue 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-</head>
-<body class="bg-gray-50 text-gray-800 font-sans antialiased h-screen overflow-hidden">
+    <style>
+        :root {
+            --color-primary: #1A1A1A;
+            --color-secondary: #2B2B2B;
+            --color-gold: #C8A359;
+            --color-gold-light: #DFBC77;
+            --color-pink: #F9C9D1;
+            --color-pink-soft: #FDEBED;
+            --color-background: #FFF8F8;
+        }
 
-    <div id="app" class="flex h-full">
+        body {
+            background-color: var(--color-background);
+            color: var(--color-primary);
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--color-gold-light); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--color-gold); }
+
+        .input-escarlu {
+            height: 48px;
+            border-radius: 14px;
+            border: 1px solid #E5E7EB;
+            transition: all 300ms ease;
+        }
+        .input-escarlu:focus {
+            border-color: var(--color-gold);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(200,163,89,0.2);
+        }
+
+        .btn-escarlu {
+            height: 56px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            transition: all 300ms ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,.08);
+        }
+        .btn-escarlu:hover:not(:disabled) {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(200,163,89,.35);
+        }
+
+        .sidebar-item { transition: all 300ms ease; }
+        .sidebar-item:hover { transform: translateX(8px) scale(1.02); }
+
+        .fade-enter-active, .fade-leave-active { transition: opacity 450ms ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+    </style>
+</head>
+<body class="font-sans antialiased h-screen overflow-hidden">
+
+    <div id="app" class="flex h-full p-4 gap-6 bg-bgMain">
 
         <!-- SIDEBAR -->
-        <aside class="w-64 bg-[#fdf2f4] border-r border-pink-100 flex flex-col shadow-sm z-20">
-            <div class="p-8 flex flex-col items-center border-b border-pink-200">
-                <div class="w-20 h-20 bg-pink-200 rounded-full mb-3 flex items-center justify-center shadow-inner">
-                    <span class="text-pink-800 font-black text-xl">ESC</span>
-                </div>
-                <h1 class="text-xl font-bold tracking-widest text-gray-900">ESCARLÚ</h1>
-                <p class="text-xs text-gray-500 uppercase tracking-wider mt-1">Producción</p>
+        <aside class="w-sidebar bg-white/60 backdrop-blur-[24px] border border-pinkMain/30 rounded-4xl flex flex-col shadow-xl z-20 relative overflow-hidden">
+            
+            <div class="p-8 flex flex-col items-center">
+                <img src="logo.jpeg" alt="ESCARLÚ Studio" class="w-full h-auto rounded-2xl shadow-m object-cover mix-blend-multiply">
             </div>
             
-            <nav class="flex-1 px-4 py-6 space-y-2">
-                <button @click="vista_actual = 'optimizador'" :class="vista_actual === 'optimizador' ? 'bg-[#f8d7da] text-gray-900 font-bold shadow-sm' : 'text-gray-600 hover:bg-pink-100'" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left">
-                    <span>✂️</span> Optimizador de Trazado
+            <nav class="flex-1 px-6 py-4 space-y-4">
+                <button @click="vista_actual = 'optimizador'" 
+                    :class="vista_actual === 'optimizador' ? 'bg-primary text-white shadow-m' : 'text-gray-700 hover:bg-white'" 
+                    class="sidebar-item w-full flex items-center gap-4 px-4 py-4 rounded-xl text-left font-medium text-[14px]">
+                    <span class="text-xl">✂️</span> Trazado
                 </button>
-                <button @click="vista_actual = 'digitalizador'" :class="vista_actual === 'digitalizador' ? 'bg-[#f8d7da] text-gray-900 font-bold shadow-sm' : 'text-gray-600 hover:bg-pink-100'" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left">
-                    <span>📸</span> Digitalizador DXF
+                <button @click="vista_actual = 'digitalizador'" 
+                    :class="vista_actual === 'digitalizador' ? 'bg-primary text-white shadow-m' : 'text-gray-700 hover:bg-white'" 
+                    class="sidebar-item w-full flex items-center gap-4 px-4 py-4 rounded-xl text-left font-medium text-[14px]">
+                    <span class="text-xl">📸</span> Digitalizador
                 </button>
-                <button @click="vista_actual = 'administrar'" :class="vista_actual === 'administrar' ? 'bg-[#f8d7da] text-gray-900 font-bold shadow-sm' : 'text-gray-600 hover:bg-pink-100'" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left">
-                    <span>⚙️</span> Ajustes / Moldes
+                <button @click="vista_actual = 'administrar'" 
+                    :class="vista_actual === 'administrar' ? 'bg-primary text-white shadow-m' : 'text-gray-700 hover:bg-white'" 
+                    class="sidebar-item w-full flex items-center gap-4 px-4 py-4 rounded-xl text-left font-medium text-[14px]">
+                    <span class="text-xl">⚙️</span> Moldes
                 </button>
             </nav>
 
-            <div class="p-4 border-t border-pink-200 text-sm text-gray-500 flex items-center gap-2">
-                <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-white font-bold">A</div>
-                <span>Administrador</span>
+            <div class="p-6 bg-white/40 border-t border-pinkMain/20 flex items-center gap-4">
+                <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-gold font-serif font-bold text-xl shadow-inner">A</div>
+                <div class="flex flex-col">
+                    <span class="text-[14px] font-bold">Administrador</span>
+                    <span class="text-[12px] text-gray-500">ESCARLÚ Studio</span>
+                </div>
             </div>
         </aside>
 
         <!-- MAIN CONTENT -->
-        <main class="flex-1 flex flex-col h-full bg-gray-50 relative overflow-hidden">
+        <main class="flex-1 flex flex-col h-full bg-white rounded-4xl shadow-xl relative overflow-hidden border border-gray-100">
             
             <!-- VISTA 1: EL OPTIMIZADOR -->
-            <div v-show="vista_actual === 'optimizador'" class="flex h-full w-full">
-                <!-- Panel del Visor (Izquierda) -->
-                <div class="w-2/3 bg-white flex flex-col border-r border-gray-200 shadow-lg z-10">
-                    <header class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-                        <h2 class="text-xl font-bold text-gray-800">Mesa de Corte Virtual</h2>
-                        <div class="text-sm px-3 py-1 rounded-full border" :class="optimizando ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-green-50 text-green-700 border-green-200'">
-                            Estado: <span class="font-semibold">{{ estado_sistema }}</span>
-                        </div>
-                    </header>
+            <transition name="fade" mode="out-in">
+                <div v-show="vista_actual === 'optimizador'" class="flex h-full w-full">
                     
-                    <div class="flex-1 p-8 flex flex-col items-center justify-center bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CjxyZWN0IHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0ibm9uZSIvPgo8Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIxIiBmaWxsPSIjZTElMTIxIi8+Cjwvc3ZnPg==')] overflow-y-auto">
-                        <div v-if="!optimizando && !resultado_final" class="text-center text-gray-400">
-                            <p class="text-lg font-semibold">Agrega modelos al carrito y presiona Optimizar</p>
-                        </div>
-
-                        <div v-if="optimizando" class="w-3/4 bg-white p-8 rounded-xl shadow-xl border border-gray-200 text-center">
-                            <h2 class="text-2xl font-bold text-gray-800 mb-6">Procesando Trazado...</h2>
-                            <div class="w-full bg-gray-200 rounded-full h-4 mb-4 overflow-hidden relative">
-                                <div class="absolute top-0 left-0 h-4 bg-[#f8d7da] w-full animate-pulse"></div>
-                                <div class="absolute top-0 left-0 h-4 bg-pink-500 w-1/3 animate-[bounce_1s_infinite_linear] rounded-full"></div>
+                    <!-- Panel del Visor -->
+                    <div class="w-2/3 bg-bgMain flex flex-col relative z-10 border-r border-gray-100">
+                        <header class="bg-white/80 backdrop-blur-md px-8 py-6 flex justify-between items-center shadow-xs">
+                            <h2 class="text-[28px] font-serif font-bold tracking-wide text-primary">Mesa de Corte Virtual</h2>
+                            <div class="text-[11px] px-4 py-2 rounded-full font-bold uppercase tracking-widest shadow-xs" 
+                                :class="optimizando ? 'bg-goldLight/20 text-gold border border-goldLight' : 'bg-[#E8F5E9] text-[#2E7D32] border border-[#A5D6A7]'">
+                                Estado: <span>{{ estado_sistema }}</span>
                             </div>
-                            <p class="text-pink-700 font-bold text-lg uppercase tracking-wide">{{ progreso_actual }}</p>
-                        </div>
-
-                        <div v-if="resultado_final && !optimizando" class="w-full h-full flex flex-col">
-                            <div class="bg-gray-900 text-white rounded-xl shadow-lg p-5 mb-6 flex justify-between items-center w-full">
-                                <div>
-                                    <h2 class="text-2xl font-black tracking-wider text-pink-300">TIZADO COMPLETADO</h2>
-                                    <p class="text-gray-400 text-sm mt-1">Tiempo de cálculo: {{ resultado_final.tiempo_seg }}s</p>
-                                </div>
-                                <div class="flex gap-4">
-                                    <div class="bg-gray-800 border border-gray-700 px-4 py-2 rounded-lg text-center">
-                                        <p class="text-xs text-gray-400 uppercase font-bold">Largo Utilizado</p>
-                                        <p class="text-xl font-bold">{{ resultado_final.largo_cm }} cm</p>
-                                    </div>
-                                    <div class="bg-pink-600 px-4 py-2 rounded-lg text-center shadow-inner">
-                                        <p class="text-xs text-pink-200 uppercase font-bold">Eficiencia Textil</p>
-                                        <p class="text-2xl font-black">{{ resultado_final.eficiencia }} %</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="flex-1 w-full space-y-6">
-                                <div v-for="(img_base64, index) in resultado_final.imagenes" :key="index" class="bg-white border-2 border-dashed border-gray-300 p-4 rounded-xl shadow-sm relative">
-                                    <span class="absolute -top-3 left-4 bg-white px-2 text-xs font-bold text-gray-500 uppercase">
-                                        {{ resultado_final.imagenes.length > 1 && index === 0 ? 'Trazo 1 (Caja / Doblez)' : (resultado_final.imagenes.length > 1 ? 'Trazo 2 (Resto)' : 'Trazo Único') }}
-                                    </span>
-                                    <img :src="img_base64" class="w-full h-auto object-contain bg-gray-50" alt="Gráfico del trazo">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Panel de Controles (Derecha) -->
-                <div class="w-1/3 bg-gray-50 flex flex-col h-full overflow-y-auto">
-                    <div class="p-6">
-                        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 mb-6">
-                            <h3 class="font-bold text-gray-800 mb-4">1. Parámetros del Rollo</h3>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Ancho (cm)</label>
-                                    <input type="number" v-model="ancho_mesa" class="w-full border-gray-300 rounded bg-gray-50 p-2 border focus:border-pink-300 focus:ring-0">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Largo Max</label>
-                                    <input type="number" v-model="largo_mesa" class="w-full border-gray-300 rounded bg-gray-50 p-2 border focus:border-pink-300 focus:ring-0">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 mb-6">
-                            <h3 class="font-bold text-gray-800 mb-4">2. Agregar al Tizado</h3>
-                            <div class="mb-4">
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Categoría</label>
-                                <select v-model="tipo_seleccionado" @change="modelo_seleccionado = ''" class="w-full border-gray-300 rounded bg-gray-50 p-2 border mb-3">
-                                    <option disabled value="">-- Elige un tipo --</option>
-                                    <option value="polo">Polo</option>
-                                    <option value="short">Short</option>
-                                    <option value="chompa">Chompa</option>
-                                    <option value="buzo">Buzo</option>
-                                </select>
-
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Modelo exacto</label>
-                                <select v-model="modelo_seleccionado" :disabled="!tipo_seleccionado" class="w-full border-gray-300 rounded bg-gray-50 p-2 border disabled:bg-gray-200">
-                                    <option disabled value="">-- Selecciona el modelo --</option>
-                                    <option v-for="(datos, id) in modelos_filtrados" :key="id" :value="id">{{ datos.nombre }}</option>
-                                </select>
-                            </div>
-                            <div class="flex gap-4">
-                                <div class="w-1/2">
-                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Prendas (Lote Base)</label>
-                                    <input type="number" min="1" v-model="cantidad_seleccionada" class="w-full border-gray-300 rounded bg-gray-50 p-2 border">
-                                </div>
-                                <div class="w-1/2 flex items-end">
-                                    <button @click="agregarPedido" :disabled="!modelo_seleccionado" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-2 px-4 rounded disabled:bg-gray-300">
-                                        + Añadir
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 mb-6">
-                            <h3 class="font-bold text-gray-800 mb-4">3. Lista de Pedidos</h3>
-                            <div v-if="lista_pedidos.length === 0" class="text-sm text-gray-400 italic text-center p-4 border-2 border-dashed rounded">
-                                Vacío.
-                            </div>
-                            <div v-else class="space-y-4">
-                                <div v-for="(pedido, index) in lista_pedidos" :key="pedido.id_unico" class="border border-pink-200 rounded p-3 bg-[#fff0f2]">
-                                    <div class="flex justify-between items-center font-bold text-gray-800 mb-3 border-b border-pink-200 pb-2">
-                                        <span>{{ pedido.nombre }} (x{{ pedido.cantidad }})</span>
-                                        <button @click="eliminarPedido(index)" class="text-red-500 text-xs font-bold uppercase">Quitar</button>
-                                    </div>
-                                    <div class="text-sm space-y-2">
-                                        <p class="font-semibold text-[10px] text-gray-500 uppercase">Tolerancia de Aplome (cm):</p>
-                                        <div v-for="molde in pedido.ajustes_moldes" :key="molde.molde_id" class="flex justify-between items-center bg-white p-2 rounded shadow-sm">
-                                            <span class="font-mono text-xs">{{ molde.molde_id }}</span>
-                                            <input type="number" step="0.5" min="0" v-model="molde.tolerancia_cm" class="w-16 border rounded p-1 text-right text-xs">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <button @click="iniciarOptimizacion" :disabled="optimizando || lista_pedidos.length === 0" class="w-full bg-[#e8a3a9] hover:bg-[#d6858c] text-white font-black text-lg py-4 px-6 rounded-xl shadow uppercase tracking-wider disabled:bg-gray-300 transition-colors">
-                            {{ optimizando ? 'Calculando...' : 'Optimizar Trazado' }}
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- VISTA 2: EL DIGITALIZADOR -->
-            <div v-show="vista_actual === 'digitalizador'" class="h-full w-full flex flex-col p-8 overflow-y-auto">
-                <header class="mb-8">
-                    <h2 class="text-3xl font-black text-gray-800">Digitalizador de Moldes</h2>
-                    <p class="text-gray-500 mt-2">Convierte fotografías de patrones físicos a formato DXF.</p>
-                </header>
-                <div class="flex-1 border-4 border-dashed border-gray-300 rounded-2xl flex items-center justify-center bg-white">
-                    <p class="text-gray-400 font-bold text-xl">Módulo en integración...</p>
-                </div>
-            </div>
-
-            <!-- VISTA 3: ADMINISTRADOR DE MOLDES (CON PESTAÑAS Y CRUD) -->
-            <div v-show="vista_actual === 'administrar'" class="h-full w-full flex flex-col p-8 overflow-y-auto">
-                <header class="mb-6">
-                    <h2 class="text-3xl font-black text-gray-800">Administración de Base de Datos</h2>
-                    <p class="text-gray-500 mt-2">Gestión total de archivos DXF y recetas de modelos.</p>
-                </header>
-
-                <!-- Menú de Sub-Pestañas Internas -->
-                <div class="flex gap-6 border-b border-gray-300 mb-6">
-                    <button @click="sub_vista_admin = 'crear'" :class="sub_vista_admin === 'crear' ? 'border-b-4 border-pink-500 text-pink-700 font-bold' : 'text-gray-500 hover:text-gray-800'" class="pb-2 px-2 transition-all">
-                        ➕ Nuevo / Formulario
-                    </button>
-                    <button @click="sub_vista_admin = 'modelos'" :class="sub_vista_admin === 'modelos' ? 'border-b-4 border-pink-500 text-pink-700 font-bold' : 'text-gray-500 hover:text-gray-800'" class="pb-2 px-2 transition-all">
-                        📋 Lista de Modelos (Recetas)
-                    </button>
-                    <button @click="sub_vista_admin = 'moldes'" :class="sub_vista_admin === 'moldes' ? 'border-b-4 border-pink-500 text-pink-700 font-bold' : 'text-gray-500 hover:text-gray-800'" class="pb-2 px-2 transition-all">
-                        📁 Lista de Moldes (DXF)
-                    </button>
-                </div>
-                
-                <!-- SUB-VISTA: Formulario de Creación / Edición -->
-                <div v-show="sub_vista_admin === 'crear'" class="grid grid-cols-2 gap-8 flex-1">
-                    <!-- Izquierda: Subir Moldes DXF -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col h-min">
-                        <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">1. Subir Nuevo Molde (DXF)</h3>
-                        <div class="mb-6">
-                            <label class="block text-sm font-bold text-gray-600 mb-1">Archivo de AutoCAD (.dxf)</label>
-                            <input type="file" @change="capturarArchivo" accept=".dxf" class="w-full border border-gray-300 rounded p-2 text-sm bg-gray-50 focus:outline-none">
-                        </div>
-                        <button @click="subirMolde" :disabled="!archivo_dxf" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">
-                            ⬆️ Guardar Molde
-                        </button>
-                        <p v-if="mensaje_molde" class="mt-3 text-sm font-bold text-green-600 text-center bg-green-50 py-1 rounded">{{ mensaje_molde }}</p>
-                    </div>
-
-                    <!-- Derecha: Crear/Editar Modelo -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col" :class="{'border-blue-300 shadow-blue-100': editando_modelo_id}">
-                        <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2 flex justify-between">
-                            <span v-if="!editando_modelo_id">2. Crear Nuevo Modelo</span>
-                            <span v-else class="text-blue-600">✏️ Editando: {{ editando_modelo_id }}</span>
-                            
-                            <button v-if="editando_modelo_id" @click="cancelarEdicion" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-800 px-2 py-1 rounded">Cancelar Edición</button>
-                        </h3>
+                        </header>
                         
-                        <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label class="block text-sm font-bold text-gray-600 mb-1">Categoría</label>
-                                <select v-model="nuevo_modelo_tipo" class="w-full border border-gray-300 rounded p-2 focus:border-pink-300">
-                                    <option disabled value="">Seleccionar...</option>
-                                    <option value="polo">Polo</option>
-                                    <option value="short">Short</option>
-                                    <option value="chompa">Chompa</option>
-                                    <option value="buzo">Buzo</option>
-                                </select>
+                        <div class="flex-1 p-8 flex flex-col items-center justify-center bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CjxyZWN0IHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0ibm9uZSIvPgo8Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIxIiBmaWxsPSIjZTVlN2ViIi8+Cjwvc3ZnPg==')] overflow-y-auto">
+                            
+                            <div v-if="!optimizando && !resultado_final" class="text-center">
+                                <div class="w-24 h-24 mx-auto border-2 border-dashed border-gray-300 rounded-full flex items-center justify-center mb-6">
+                                    <span class="text-4xl text-gray-300">✂️</span>
+                                </div>
+                                <p class="text-[22px] font-serif italic text-gray-400">Agrega modelos y procesa el tizado</p>
                             </div>
-                            <div>
-                                <label class="block text-sm font-bold text-gray-600 mb-1">Nombre (con Talla)</label>
-                                <input type="text" v-model="nuevo_modelo_nombre" placeholder="Ej: Polo V - Talla M" class="w-full border border-gray-300 rounded p-2 focus:border-pink-300">
+
+                            <div v-if="optimizando" class="w-2/3 bg-white p-12 rounded-4xl shadow-xl text-center">
+                                <h2 class="text-[28px] font-serif font-bold mb-8">Procesando Geometrías...</h2>
+                                <div class="w-full bg-gray-100 rounded-full h-2 mb-6 overflow-hidden relative">
+                                    <div class="absolute top-0 left-0 h-2 bg-goldLight w-full animate-pulse opacity-30"></div>
+                                    <div class="absolute top-0 left-0 h-2 bg-gold w-1/3 animate-[bounce_1s_infinite_linear] rounded-full shadow-glow"></div>
+                                </div>
+                                <p class="font-mono text-[12px] font-bold text-gray-500 uppercase tracking-widest">{{ progreso_actual }}</p>
+                            </div>
+
+                            <div v-if="resultado_final && !optimizando" class="w-full h-full flex flex-col">
+                                <!-- Tarjetas Superiores KPI -->
+                                <div class="grid grid-cols-3 gap-6 mb-8 w-full">
+                                    <div class="bg-primary text-white rounded-[24px] shadow-m p-6 h-[120px] flex flex-col justify-center relative overflow-hidden">
+                                        <div class="absolute top-0 right-0 w-20 h-20 bg-secondary rounded-bl-full opacity-50"></div>
+                                        <p class="text-[11px] text-gray-400 uppercase font-bold tracking-widest mb-2 z-10">Largo Total</p>
+                                        <p class="text-[28px] font-mono font-bold z-10">{{ resultado_final.largo_cm }} <span class="text-[14px] font-sans font-normal text-gray-400">cm</span></p>
+                                    </div>
+                                    <div class="bg-gradient-to-br from-gold to-[#A6833D] rounded-[24px] shadow-glow p-6 h-[120px] flex flex-col justify-center">
+                                        <p class="text-[11px] text-primary/70 uppercase font-bold tracking-widest mb-2">Eficiencia Textil</p>
+                                        <p class="text-[28px] font-mono font-bold text-primary">{{ resultado_final.eficiencia }}%</p>
+                                    </div>
+                                    <div class="bg-white rounded-[24px] shadow-m p-6 h-[120px] flex flex-col justify-center border border-gray-100">
+                                        <p class="text-[11px] text-gray-400 uppercase font-bold tracking-widest mb-2">Tiempo CPU</p>
+                                        <p class="text-[28px] font-mono font-bold text-primary">{{ resultado_final.tiempo_seg }} <span class="text-[14px] font-sans font-normal text-gray-400">seg</span></p>
+                                    </div>
+                                </div>
+
+                                <div class="flex-1 w-full space-y-8">
+                                    <div v-for="(img_base64, index) in resultado_final.imagenes" :key="index" class="bg-white border border-gray-100 p-8 rounded-4xl shadow-m relative">
+                                        <span class="absolute -top-4 left-8 bg-primary text-gold px-4 py-2 text-[11px] font-bold uppercase tracking-widest rounded-xl shadow-m">
+                                            {{ resultado_final.imagenes.length > 1 && index === 0 ? 'Trazo 1 (Principal)' : (resultado_final.imagenes.length > 1 ? 'Trazo 2 (Doblez)' : 'Trazo Único') }}
+                                        </span>
+                                        <img :src="img_base64" class="w-full h-auto object-contain rounded-xl" alt="Gráfico del trazo">
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="bg-gray-50 p-4 rounded border mb-4 flex-1">
-                            <h4 class="font-bold text-sm text-gray-700 mb-2">Piezas de la receta</h4>
+                    <!-- Panel de Controles -->
+                    <div class="w-1/3 bg-white flex flex-col h-full overflow-y-auto">
+                        <div class="p-8 space-y-8">
                             
-                            <div class="flex gap-2 mb-4">
-                                <select v-model="molde_id_temp" class="w-1/2 border border-gray-300 rounded p-2 text-sm focus:border-pink-300">
-                                    <option disabled value="">-- Elegir Pieza --</option>
-                                    <option v-for="(info, id) in moldes_disponibles" :key="id" :value="id">{{ info.alias }}</option>
-                                </select>
-                                <input type="number" v-model="cantidad_molde_temp" min="1" placeholder="Cant." class="w-1/4 border border-gray-300 rounded p-2 text-sm focus:border-pink-300">
-                                <button @click="agregarMoldeReceta" :disabled="!molde_id_temp" class="w-1/4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-bold rounded text-sm transition-colors">+</button>
+                            <div>
+                                <h3 class="font-serif text-[22px] font-bold text-primary mb-6">Configuración</h3>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Ancho (cm)</label>
+                                        <input type="number" v-model="ancho_mesa" class="w-full input-escarlu bg-bgMain px-4 font-mono font-bold text-[14px]">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Largo Max</label>
+                                        <input type="number" v-model="largo_mesa" class="w-full input-escarlu bg-bgMain px-4 font-mono font-bold text-[14px]">
+                                    </div>
+                                </div>
                             </div>
-                            
-                            <ul class="text-sm space-y-2">
-                                <li v-if="receta_temporal.length === 0" class="text-gray-400 italic text-center py-2">No hay piezas añadidas.</li>
-                                <li v-for="(item, index) in receta_temporal" :key="index" class="flex justify-between items-center bg-white p-2 border rounded shadow-sm">
-                                    <span class="font-mono font-semibold">{{ item.molde_id }} <span class="text-gray-500 font-sans font-normal">(x{{ item.cantidad_por_prenda }})</span></span>
-                                    <button @click="receta_temporal.splice(index, 1)" class="text-red-500 font-bold hover:text-red-700">Quitar</button>
-                                </li>
-                            </ul>
-                        </div>
 
-                        <button @click="guardarModelo" :disabled="!nuevo_modelo_tipo || !nuevo_modelo_nombre || receta_temporal.length === 0" :class="editando_modelo_id ? 'bg-blue-600 hover:bg-blue-700' : 'bg-[#e8a3a9] hover:bg-[#d6858c]'" class="w-full text-white font-black text-lg py-4 rounded-xl shadow transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">
-                            {{ editando_modelo_id ? '💾 Actualizar Modelo' : '💾 Guardar Nuevo Modelo' }}
-                        </button>
-                        <p v-if="mensaje_modelo" class="mt-3 text-sm font-bold text-green-600 text-center bg-green-50 py-1 rounded">{{ mensaje_modelo }}</p>
-                    </div>
-                </div>
+                            <div>
+                                <h3 class="font-serif text-[22px] font-bold text-primary mb-6">Añadir Lote</h3>
+                                <div class="space-y-4">
+                                    <select v-model="tipo_seleccionado" class="w-full input-escarlu bg-bgMain px-4 text-[14px] font-medium">
+                                        <option disabled value="">-- Categoría --</option>
+                                        <option value="polo">Polo</option>
+                                        <option value="short">Short</option>
+                                        <option value="chompa">Chompa</option>
+                                        <option value="buzo">Buzo</option>
+                                    </select>
 
-                <!-- SUB-VISTA: Lista de Modelos (CRUD) -->
-                <div v-show="sub_vista_admin === 'modelos'" class="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-                    <div class="p-6 border-b bg-gray-50 flex justify-between items-center">
-                        <h3 class="text-xl font-bold text-gray-800">Directorio de Modelos</h3>
-                        <span class="text-sm text-gray-500">{{ Object.keys(modelos_disponibles).length }} registrados</span>
-                    </div>
-                    <div class="p-6 flex-1 overflow-y-auto">
-                        <table class="w-full text-left text-sm text-gray-600">
-                            <thead class="text-xs text-gray-500 uppercase bg-gray-100">
-                                <tr>
-                                    <th class="px-4 py-3">ID</th>
-                                    <th class="px-4 py-3">Nombre</th>
-                                    <th class="px-4 py-3">Tipo</th>
-                                    <th class="px-4 py-3">Piezas (Receta)</th>
-                                    <th class="px-4 py-3 text-right">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-if="Object.keys(modelos_disponibles).length === 0">
-                                    <td colspan="5" class="text-center py-4 text-gray-400">No hay modelos registrados.</td>
-                                </tr>
-                                <tr v-for="(datos, id) in modelos_disponibles" :key="id" class="border-b hover:bg-gray-50">
-                                    <td class="px-4 py-3 font-mono text-xs font-bold">{{ id }}</td>
-                                    <td class="px-4 py-3 font-bold text-gray-800">{{ datos.nombre }}</td>
-                                    <td class="px-4 py-3 uppercase text-xs">{{ datos.tipo }}</td>
-                                    <td class="px-4 py-3">
-                                        <div class="flex flex-wrap gap-1">
-                                            <span v-for="pieza in datos.receta" :key="pieza.molde_id" class="bg-pink-50 text-pink-700 border border-pink-200 px-2 py-0.5 rounded text-[10px] font-semibold">
-                                                {{ pieza.molde_id }} (x{{ pieza.cantidad_por_prenda }})
-                                            </span>
+                                    <!-- AUTOCOMPLETADO DE MODELOS -->
+                                    <div class="relative">
+                                        <input type="text" 
+                                            v-model="busqueda_modelo" 
+                                            @focus="mostrar_dropdown_modelo = true"
+                                            @blur="ocultarDropdownModelo"
+                                            @input="modelo_seleccionado = ''"
+                                            :disabled="!tipo_seleccionado"
+                                            placeholder="-- Buscar o escribir modelo --"
+                                            class="w-full input-escarlu bg-bgMain px-4 text-[14px] font-medium disabled:opacity-50">
+                                        
+                                        <ul v-if="mostrar_dropdown_modelo && tipo_seleccionado" class="absolute z-50 w-full bg-white border border-gray-200 rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto">
+                                            <li v-if="modelos_busqueda.length === 0" class="px-4 py-3 text-sm text-gray-400 italic">No hay resultados.</li>
+                                            <li v-for="modelo in modelos_busqueda" :key="modelo.id" 
+                                                @mousedown.prevent="seleccionarModelo(modelo.id, modelo.nombre)"
+                                                class="px-4 py-3 hover:bg-[#FFF6F0] hover:text-primary cursor-pointer text-[14px] font-medium text-gray-600 transition-colors border-b border-gray-50 last:border-0">
+                                                {{ modelo.nombre }}
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                    <div class="flex gap-4">
+                                        <div class="w-1/3">
+                                            <input type="number" step="0.5" min="0.5" v-model.number="cantidad_seleccionada" class="w-full input-escarlu bg-bgMain text-center font-mono font-bold text-[14px]" placeholder="Cant.">
                                         </div>
-                                    </td>
-                                    <td class="px-4 py-3 text-right space-x-2">
-                                        <button @click="prepararEdicionModelo(id)" class="text-blue-600 hover:text-blue-800 font-bold uppercase text-xs">Editar</button>
-                                        <button @click="eliminarModeloBD(id)" class="text-red-600 hover:text-red-800 font-bold uppercase text-xs">Borrar</button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                                        <div class="w-2/3">
+                                            <button @click="agregarPedido" :disabled="!modelo_seleccionado" class="w-full h-[48px] rounded-xl bg-secondary text-white font-bold text-[12px] uppercase tracking-widest hover:bg-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xs">
+                                                Añadir Modelo
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between items-end mb-6">
+                                    <h3 class="font-serif text-[22px] font-bold text-primary">Cola de Producción</h3>
+                                </div>
+                                <div v-if="lista_pedidos.length === 0" class="text-[12px] text-gray-400 text-center p-8 border-2 border-dashed border-gray-200 rounded-2xl">
+                                    Lista vacía
+                                </div>
+                                <div v-else class="space-y-4">
+                                    <div v-for="(pedido, index) in lista_pedidos" :key="pedido.id_unico" class="border border-goldLight/30 rounded-2xl p-5 bg-bgMain shadow-xs relative">
+                                        <div class="flex justify-between items-center mb-4 border-b border-gray-200 pb-3">
+                                            <span class="font-serif font-bold text-[16px] text-primary">{{ pedido.nombre }} <span class="text-gold font-mono ml-2">x{{ pedido.cantidad }}</span></span>
+                                            <button @click="eliminarPedido(index)" class="text-gray-400 hover:text-primary text-[11px] font-bold uppercase tracking-widest transition-colors">Quitar</button>
+                                        </div>
+                                        <div class="space-y-2">
+                                            <p class="font-semibold text-[11px] text-gray-500 uppercase tracking-widest">Tolerancia de Aplome (cm)</p>
+                                            <div v-for="molde in pedido.ajustes_moldes" :key="molde.molde_id" class="flex justify-between items-center bg-white px-4 py-2 rounded-xl shadow-xs border border-gray-100">
+                                                <span class="font-sans text-[12px] font-medium text-gray-700">{{ molde.molde_id }}</span>
+                                                <input type="number" step="0.5" min="0" v-model="molde.tolerancia_cm" class="w-16 border-b border-gray-200 text-center font-mono text-[14px] font-bold focus:border-gold outline-none bg-transparent">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button @click="iniciarOptimizacion" :disabled="optimizando || lista_pedidos.length === 0" class="w-full btn-escarlu text-gold font-serif italic font-bold text-[18px] tracking-wide disabled:opacity-50 disabled:cursor-not-allowed">
+                                {{ optimizando ? 'Procesando Motor...' : 'Generar Tizado' }}
+                            </button>
+                        </div>
                     </div>
                 </div>
+            </transition>
 
-                <!-- SUB-VISTA: Lista de Moldes (CRUD) -->
-                <div v-show="sub_vista_admin === 'moldes'" class="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-                    <div class="p-6 border-b bg-gray-50 flex justify-between items-center">
-                        <h3 class="text-xl font-bold text-gray-800">Directorio de Archivos DXF</h3>
-                        <span class="text-sm text-gray-500">{{ Object.keys(moldes_disponibles).length }} archivos físicos</span>
-                    </div>
-                    <div class="p-6 flex-1 overflow-y-auto">
-                        <table class="w-full text-left text-sm text-gray-600">
-                            <thead class="text-xs text-gray-500 uppercase bg-gray-100">
-                                <tr>
-                                    <th class="px-4 py-3">Nombre Físico / ID</th>
-                                    <th class="px-4 py-3">Ruta Interna</th>
-                                    <th class="px-4 py-3 text-right">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-if="Object.keys(moldes_disponibles).length === 0">
-                                    <td colspan="3" class="text-center py-4 text-gray-400">No hay moldes subidos.</td>
-                                </tr>
-                                <tr v-for="(info, id) in moldes_disponibles" :key="id" class="border-b hover:bg-gray-50">
-                                    <td class="px-4 py-3 font-mono font-bold text-gray-800">{{ id }}</td>
-                                    <td class="px-4 py-3 text-xs text-gray-400">{{ info.ruta }}</td>
-                                    <td class="px-4 py-3 text-right">
-                                        <button @click="eliminarMoldeBD(id)" class="text-red-600 hover:text-red-800 font-bold uppercase text-xs">Borrar</button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+            <!-- VISTA 2: DIGITALIZADOR -->
+            <transition name="fade" mode="out-in">
+                <div v-show="vista_actual === 'digitalizador'" class="h-full w-full flex flex-col p-12 overflow-y-auto bg-bgMain">
+                    <header class="mb-12 text-center">
+                        <h2 class="text-[48px] font-serif font-bold text-primary">Digitalizador de Patrones</h2>
+                        <p class="text-[12px] text-gray-500 mt-4 font-bold uppercase tracking-widest">Módulo en Desarrollo</p>
+                    </header>
+                    <div class="flex-1 border-2 border-dashed border-goldLight rounded-4xl flex items-center justify-center bg-white shadow-xs">
+                        <div class="text-center">
+                            <span class="text-6xl mb-6 block">📷</span>
+                            <p class="font-serif text-[22px] italic text-gray-400">La integración fotográfica estará disponible pronto.</p>
+                        </div>
                     </div>
                 </div>
+            </transition>
 
-            </div>
+            <!-- VISTA 3: ADMINISTRADOR -->
+            <transition name="fade" mode="out-in">
+                <div v-show="vista_actual === 'administrar'" class="h-full w-full flex flex-col p-12 overflow-y-auto bg-bgMain">
+                    <header class="mb-12">
+                        <h2 class="text-[48px] font-serif font-bold text-primary">Biblioteca de Studio</h2>
+                        <p class="text-[14px] text-gray-600 mt-2">Gestión de archivos base DXF y recetas de diseño.</p>
+                    </header>
+
+                    <div class="flex gap-8 border-b border-gray-200 mb-8">
+                        <button @click="sub_vista_admin = 'crear'" :class="sub_vista_admin === 'crear' ? 'border-b-2 border-gold text-primary font-bold' : 'text-gray-400 hover:text-gray-800'" class="pb-4 px-2 transition-all uppercase text-[11px] tracking-widest font-semibold">
+                            Registro
+                        </button>
+                        <button @click="sub_vista_admin = 'modelos'" :class="sub_vista_admin === 'modelos' ? 'border-b-2 border-gold text-primary font-bold' : 'text-gray-400 hover:text-gray-800'" class="pb-4 px-2 transition-all uppercase text-[11px] tracking-widest font-semibold">
+                            Catálogo
+                        </button>
+                        <button @click="sub_vista_admin = 'moldes'" :class="sub_vista_admin === 'moldes' ? 'border-b-2 border-gold text-primary font-bold' : 'text-gray-400 hover:text-gray-800'" class="pb-4 px-2 transition-all uppercase text-[11px] tracking-widest font-semibold">
+                            Archivos DXF
+                        </button>
+                    </div>
+                    
+                    <div v-show="sub_vista_admin === 'crear'" class="grid grid-cols-2 gap-12 flex-1">
+                        <!-- Subir Moldes DXF (AHORA MÚLTIPLES) -->
+                        <div class="bg-white rounded-4xl shadow-m border border-gray-100 p-10 flex flex-col h-min">
+                            <h3 class="text-[28px] font-serif font-bold text-primary mb-8 border-b border-gray-100 pb-4">Subir Archivos Base</h3>
+                            <div class="mb-8">
+                                <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-4">Archivos AutoCAD (.dxf)</label>
+                                <!-- El atributo 'multiple' permite seleccionar varios archivos de golpe -->
+                                <input type="file" multiple @change="capturarArchivo" accept=".dxf" class="w-full border border-dashed border-gray-300 rounded-2xl p-6 text-[14px] bg-bgMain focus:outline-none file:mr-6 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-[11px] file:font-bold file:uppercase file:tracking-widest file:bg-secondary file:text-white hover:file:bg-primary transition-all">
+                            </div>
+                            <button @click="subirMolde" :disabled="archivos_dxf.length === 0" class="w-full btn-escarlu text-white font-bold text-[12px] uppercase tracking-widest disabled:opacity-50">
+                                Guardar Moldes en Servidor
+                            </button>
+                            <p v-if="mensaje_molde" class="mt-6 text-[12px] font-bold text-gold text-center bg-primary py-3 rounded-xl">{{ mensaje_molde }}</p>
+                        </div>
+
+                        <!-- Crear/Editar Modelo -->
+                        <div class="bg-white rounded-4xl shadow-m border border-gray-100 p-10 flex flex-col" :class="{'ring-2 ring-gold shadow-glow': editando_modelo_id}">
+                            <h3 class="text-[28px] font-serif font-bold text-primary mb-8 border-b border-gray-100 pb-4 flex justify-between items-center">
+                                <span v-if="!editando_modelo_id">Nuevo Diseño</span>
+                                <span v-else class="text-gold">Editando: {{ editando_modelo_id }}</span>
+                                <button v-if="editando_modelo_id" @click="cancelarEdicion" class="text-[11px] bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded-xl uppercase tracking-widest font-bold">Cancelar</button>
+                            </h3>
+                            
+                            <div class="grid grid-cols-2 gap-6 mb-8">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Categoría</label>
+                                    <select v-model="nuevo_modelo_tipo" class="w-full input-escarlu bg-bgMain px-4 text-[14px]">
+                                        <option disabled value="">Seleccionar...</option>
+                                        <option value="polo">Polo</option>
+                                        <option value="short">Short</option>
+                                        <option value="chompa">Chompa</option>
+                                        <option value="buzo">Buzo</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Referencia</label>
+                                    <input type="text" v-model="nuevo_modelo_nombre" placeholder="Ej: Polo V - Talla M" class="w-full input-escarlu bg-bgMain px-4 text-[14px]">
+                                </div>
+                            </div>
+
+                            <div class="bg-bgMain p-8 rounded-2xl border border-gray-200 mb-8 flex-1">
+                                <h4 class="font-bold text-[11px] text-gray-600 uppercase tracking-widest mb-6">Receta de Piezas</h4>
+                                
+                                <div class="flex gap-4 mb-6">
+                                    <!-- AUTOCOMPLETADO DE MOLDES DXF -->
+                                    <div class="relative flex-1">
+                                        <input type="text" 
+                                            v-model="busqueda_molde" 
+                                            @focus="mostrar_dropdown_molde = true"
+                                            @blur="ocultarDropdownMolde"
+                                            @input="molde_id_temp = ''"
+                                            placeholder="Buscar molde base..."
+                                            class="w-full input-escarlu bg-white px-4 text-[14px]">
+                                        
+                                        <ul v-if="mostrar_dropdown_molde" class="absolute z-50 w-full bg-white border border-gray-200 rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto">
+                                            <li v-if="moldes_busqueda.length === 0" class="px-4 py-3 text-sm text-gray-400 italic">No hay resultados.</li>
+                                            <li v-for="molde in moldes_busqueda" :key="molde.id" 
+                                                @mousedown.prevent="seleccionarMolde(molde.id, molde.alias)"
+                                                class="px-4 py-3 hover:bg-[#FFF6F0] hover:text-primary cursor-pointer text-[14px] font-medium text-gray-600 transition-colors border-b border-gray-50 last:border-0">
+                                                {{ molde.alias }}
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                    <input type="number" v-model="cantidad_molde_temp" min="1" placeholder="Cant." class="w-24 input-escarlu bg-white px-4 text-center font-mono text-[14px]">
+                                    <button @click="agregarMoldeReceta" :disabled="!molde_id_temp" class="px-6 rounded-xl bg-white border border-gray-200 hover:border-gold text-primary font-bold text-[18px] transition-all shadow-xs disabled:opacity-50">+</button>
+                                </div>
+                                
+                                <ul class="space-y-4">
+                                    <li v-if="receta_temporal.length === 0" class="text-gray-400 font-serif italic text-center py-6 text-[14px]">Sin piezas añadidas.</li>
+                                    <li v-for="(item, index) in receta_temporal" :key="index" class="flex justify-between items-center bg-white px-6 py-4 border border-gray-100 rounded-xl shadow-xs">
+                                        <span class="text-[14px] font-medium text-gray-700">{{ item.molde_id }} <span class="text-gold font-mono font-bold ml-3">x{{ item.cantidad_por_prenda }}</span></span>
+                                        <button @click="receta_temporal.splice(index, 1)" class="text-gray-300 hover:text-primary font-bold uppercase text-[11px] tracking-widest transition-colors">Quitar</button>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <button @click="guardarModelo" :disabled="!nuevo_modelo_tipo || !nuevo_modelo_nombre || receta_temporal.length === 0" 
+                                    class="w-full btn-escarlu text-gold font-serif italic font-bold text-[18px] disabled:opacity-50">
+                                {{ editando_modelo_id ? 'Actualizar Diseño' : 'Guardar Diseño' }}
+                            </button>
+                            <p v-if="mensaje_modelo" class="mt-6 text-[12px] font-bold text-gold text-center bg-primary py-3 rounded-xl">{{ mensaje_modelo }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Modelos -->
+                    <div v-show="sub_vista_admin === 'modelos'" class="flex-1 bg-white rounded-4xl shadow-m border border-gray-100 overflow-hidden flex flex-col">
+                        <div class="p-8 border-b border-gray-100 bg-[#F7F7F7] flex justify-between items-center">
+                            <h3 class="font-serif text-[28px] font-bold text-primary">Catálogo de Colección</h3>
+                            <span class="text-[11px] font-bold text-gray-400 uppercase tracking-widest font-mono">{{ Object.keys(modelos_disponibles).length }} Refs</span>
+                        </div>
+                        <div class="flex-1 overflow-y-auto">
+                            <table class="w-full text-left text-[14px] text-gray-600">
+                                <thead class="text-[11px] text-gray-400 uppercase tracking-widest bg-[#F7F7F7]">
+                                    <tr>
+                                        <th class="px-8 py-5">ID</th>
+                                        <th class="px-8 py-5">Nombre / Talla</th>
+                                        <th class="px-8 py-5">Categoría</th>
+                                        <th class="px-8 py-5">Desglose</th>
+                                        <th class="px-8 py-5 text-right">Opciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <tr v-if="Object.keys(modelos_disponibles).length === 0">
+                                        <td colspan="5" class="text-center py-12 text-gray-400 font-serif italic">Catálogo vacío.</td>
+                                    </tr>
+                                    <tr v-for="(datos, id) in modelos_disponibles" :key="id" class="hover:bg-[#FFF6F0] transition-colors">
+                                        <td class="px-8 py-6 font-mono text-[12px] font-semibold text-gray-400">{{ id }}</td>
+                                        <td class="px-8 py-6 font-serif font-bold text-primary text-[18px]">{{ datos.nombre }}</td>
+                                        <td class="px-8 py-6 uppercase text-[12px] font-medium text-gray-500">{{ datos.tipo }}</td>
+                                        <td class="px-8 py-6">
+                                            <div class="flex flex-wrap gap-2">
+                                                <span v-for="pieza in datos.receta" :key="pieza.molde_id" class="bg-white text-gray-700 border border-gray-200 px-3 py-1.5 rounded-lg text-[11px] font-semibold shadow-xs">
+                                                    {{ pieza.molde_id }} <span class="text-gold font-mono font-bold ml-1">x{{ pieza.cantidad_por_prenda }}</span>
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td class="px-8 py-6 text-right space-x-4">
+                                            <button @click="prepararEdicionModelo(id)" class="text-gold hover:text-primary font-bold uppercase text-[11px] tracking-widest transition-colors">Editar</button>
+                                            <button @click="eliminarModeloBD(id)" class="text-gray-300 hover:text-primary font-bold uppercase text-[11px] tracking-widest transition-colors">Borrar</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Moldes DXF -->
+                    <div v-show="sub_vista_admin === 'moldes'" class="flex-1 bg-white rounded-4xl shadow-m border border-gray-100 overflow-hidden flex flex-col">
+                        <div class="p-8 border-b border-gray-100 bg-[#F7F7F7] flex justify-between items-center">
+                            <h3 class="font-serif text-[28px] font-bold text-primary">Repositorio DXF</h3>
+                            <span class="text-[11px] font-bold text-gray-400 uppercase tracking-widest font-mono">{{ Object.keys(moldes_disponibles).length }} Archivos</span>
+                        </div>
+                        <div class="flex-1 overflow-y-auto">
+                            <table class="w-full text-left text-[14px] text-gray-600">
+                                <thead class="text-[11px] text-gray-400 uppercase tracking-widest bg-[#F7F7F7]">
+                                    <tr>
+                                        <th class="px-8 py-5">ID Base</th>
+                                        <th class="px-8 py-5">Ruta Interna</th>
+                                        <th class="px-8 py-5 text-right">Opciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <tr v-if="Object.keys(moldes_disponibles).length === 0">
+                                        <td colspan="3" class="text-center py-12 text-gray-400 font-serif italic">Sin archivos físicos.</td>
+                                    </tr>
+                                    <tr v-for="(info, id) in moldes_disponibles" :key="id" class="hover:bg-[#FFF6F0] transition-colors">
+                                        <td class="px-8 py-6 font-sans font-semibold text-primary">{{ id }}</td>
+                                        <td class="px-8 py-6 text-[12px] text-gray-400 font-mono">{{ info.ruta }}</td>
+                                        <td class="px-8 py-6 text-right">
+                                            <button @click="eliminarMoldeBD(id)" class="text-gray-300 hover:text-primary font-bold uppercase text-[11px] tracking-widest transition-colors">Borrar</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </transition>
 
         </main>
     </div>
 
-    <!-- LÓGICA VUE -->
+    <!-- LÓGICA VUE CON AUTOCOMPLETADO Y MÚLTIPLES ARCHIVOS -->
     <script>
-        const { createApp, ref, onMounted, computed } = Vue
+        const { createApp, ref, onMounted, computed, watch } = Vue
 
         createApp({
             setup() {
                 const vista_actual = ref('optimizador')
-                const sub_vista_admin = ref('crear') // Control de pestañas de administración
+                const sub_vista_admin = ref('crear') 
 
-                // --- ESTADOS OPTIMIZADOR ---
                 const estado_sistema = ref('En espera')
                 const ancho_mesa = ref(150.0)
                 const largo_mesa = ref(500.0)
@@ -373,6 +519,15 @@
                 const modelo_seleccionado = ref('')
                 const cantidad_seleccionada = ref(1)
 
+                // LÓGICA AUTOCOMPLETADO MODELOS
+                const busqueda_modelo = ref('')
+                const mostrar_dropdown_modelo = ref(false)
+
+                watch(tipo_seleccionado, () => {
+                    busqueda_modelo.value = '';
+                    modelo_seleccionado.value = '';
+                });
+
                 const modelos_filtrados = computed(() => {
                     const filtrados = {}
                     for (const id in modelos_disponibles.value) {
@@ -381,7 +536,29 @@
                         }
                     }
                     return filtrados
-                })
+                });
+
+                const modelos_busqueda = computed(() => {
+                    const arr = [];
+                    const query = busqueda_modelo.value.toLowerCase();
+                    for (const id in modelos_filtrados.value) {
+                        const modelo = modelos_filtrados.value[id];
+                        if (modelo.nombre.toLowerCase().includes(query)) {
+                            arr.push({ id: id, nombre: modelo.nombre });
+                        }
+                    }
+                    return arr;
+                });
+
+                const seleccionarModelo = (id, nombre) => {
+                    modelo_seleccionado.value = id;
+                    busqueda_modelo.value = nombre;
+                    mostrar_dropdown_modelo.value = false;
+                };
+
+                const ocultarDropdownModelo = () => {
+                    mostrar_dropdown_modelo.value = false;
+                };
 
                 const cargarModelos = async () => {
                     try {
@@ -423,6 +600,9 @@
                         }))
                     };
                     lista_pedidos.value.push(nuevoPedido);
+                    // Opcional: limpiar búsqueda después de añadir
+                    busqueda_modelo.value = '';
+                    modelo_seleccionado.value = '';
                 }
 
                 const eliminarPedido = (index) => { lista_pedidos.value.splice(index, 1); }
@@ -476,37 +656,43 @@
                     }
                 }
 
-                // --- ESTADOS ADMINISTRADOR DE MOLDES ---
-                const archivo_dxf = ref(null)
+                // LÓGICA SUBIDA MÚLTIPLE DXF
+                const archivos_dxf = ref([]) // Ahora es una lista
                 const mensaje_molde = ref('')
 
-                const capturarArchivo = (event) => { archivo_dxf.value = event.target.files[0] }
+                const capturarArchivo = (event) => { 
+                    archivos_dxf.value = Array.from(event.target.files) 
+                }
 
                 const subirMolde = async () => {
-                    if (!archivo_dxf.value) return;
+                    if (archivos_dxf.value.length === 0) return;
+                    
                     const formData = new FormData();
-                    formData.append("archivo", archivo_dxf.value);
+                    // Empaquetamos todos los archivos bajo el mismo nombre que espera Python
+                    archivos_dxf.value.forEach(archivo => {
+                        formData.append("archivos", archivo);
+                    });
+                    
                     try {
                         const respuesta = await fetch('http://localhost:8000/api/moldes/subir', { method: 'POST', body: formData });
                         if (!respuesta.ok) throw new Error("Error al subir");
                         const data = await respuesta.json();
-                        mensaje_molde.value = `¡Pieza guardada: ${data.molde_id}!`;
-                        archivo_dxf.value = null;
+                        
+                        mensaje_molde.value = `¡${data.moldes_ids.length} archivos guardados con éxito!`;
+                        archivos_dxf.value = [];
                         document.querySelector('input[type="file"]').value = '';
                         setTimeout(() => mensaje_molde.value = '', 4000);
                         cargarMoldes(); 
                     } catch (error) {
-                        mensaje_molde.value = "Error al subir archivo.";
+                        mensaje_molde.value = "Error al subir archivos.";
                     }
                 }
 
-                // --- CRUD DE MOLDES ---
                 const eliminarMoldeBD = async (id) => {
                     if(!confirm(`¿Seguro que deseas eliminar el archivo físico ${id}?\n\nAdvertencia: Si este molde pertenece a una receta, esa prenda dará error al intentar optimizarse.`)) return;
                     try {
                         const respuesta = await fetch(`http://localhost:8000/api/moldes/${id}`, { method: 'DELETE' });
                         if(respuesta.ok) {
-                            alert("Molde eliminado exitosamente.");
                             cargarMoldes();
                         }
                     } catch (error) {
@@ -514,19 +700,48 @@
                     }
                 }
 
-                // --- CRUD DE MODELOS (RECETAS) ---
+                // LÓGICA EDICIÓN Y AUTOCOMPLETADO DE MOLDES (RECETAS)
                 const editando_modelo_id = ref(null)
                 const nuevo_modelo_tipo = ref('')
                 const nuevo_modelo_nombre = ref('')
+                
                 const molde_id_temp = ref('')
                 const cantidad_molde_temp = ref(1)
                 const receta_temporal = ref([])
                 const mensaje_modelo = ref('')
+                
+                const busqueda_molde = ref('')
+                const mostrar_dropdown_molde = ref(false)
+
+                const moldes_busqueda = computed(() => {
+                    const arr = [];
+                    const query = busqueda_molde.value.toLowerCase();
+                    for (const id in moldes_disponibles.value) {
+                        const alias = moldes_disponibles.value[id].alias;
+                        if (alias.toLowerCase().includes(query)) {
+                            arr.push({ id: id, alias: alias });
+                        }
+                    }
+                    return arr;
+                });
+
+                const seleccionarMolde = (id, alias) => {
+                    molde_id_temp.value = id;
+                    busqueda_molde.value = alias;
+                    mostrar_dropdown_molde.value = false;
+                };
+
+                const ocultarDropdownMolde = () => {
+                    mostrar_dropdown_molde.value = false;
+                };
 
                 const agregarMoldeReceta = () => {
                     if (molde_id_temp.value && cantidad_molde_temp.value > 0) {
                         receta_temporal.value.push({ molde_id: molde_id_temp.value.trim(), cantidad_por_prenda: cantidad_molde_temp.value });
+                        
+                        // Limpiar campos y buscador
                         molde_id_temp.value = '';
+                        busqueda_molde.value = '';
                         cantidad_molde_temp.value = 1;
                     }
                 }
@@ -536,7 +751,6 @@
                     editando_modelo_id.value = id;
                     nuevo_modelo_tipo.value = modelo_db.tipo;
                     nuevo_modelo_nombre.value = modelo_db.nombre;
-                    // Clonamos la receta para no alterar la original hasta guardar
                     receta_temporal.value = modelo_db.receta.map(item => ({...item}));
                     sub_vista_admin.value = 'crear';
                 }
@@ -546,6 +760,8 @@
                     nuevo_modelo_tipo.value = '';
                     nuevo_modelo_nombre.value = '';
                     receta_temporal.value = [];
+                    busqueda_molde.value = '';
+                    molde_id_temp.value = '';
                 }
 
                 const guardarModelo = async () => {
@@ -565,7 +781,7 @@
                         
                         mensaje_modelo.value = editando_modelo_id.value ? '¡Modelo Actualizado!' : `¡Modelo creado! ID: ${data.modelo_id}`;
                         
-                        cancelarEdicion(); // Limpia todo
+                        cancelarEdicion(); 
                         setTimeout(() => mensaje_modelo.value = '', 5000);
                         cargarModelos();
                         
@@ -590,14 +806,16 @@
                     vista_actual, sub_vista_admin,
                     estado_sistema, ancho_mesa, largo_mesa, modelos_disponibles,
                     tipo_seleccionado, modelos_filtrados, modelo_seleccionado,
+                    busqueda_modelo, mostrar_dropdown_modelo, modelos_busqueda, seleccionarModelo, ocultarDropdownModelo,
                     cantidad_seleccionada, lista_pedidos, agregarPedido, eliminarPedido,
                     optimizando, progreso_actual, resultado_final, iniciarOptimizacion,
-                    moldes_disponibles, archivo_dxf, mensaje_molde, capturarArchivo, subirMolde, eliminarMoldeBD,
-                    editando_modelo_id, nuevo_modelo_tipo, nuevo_modelo_nombre, molde_id_temp, cantidad_molde_temp,
-                    receta_temporal, mensaje_modelo, agregarMoldeReceta, guardarModelo, prepararEdicionModelo, cancelarEdicion, eliminarModeloBD
+                    moldes_disponibles, archivos_dxf, mensaje_molde, capturarArchivo, subirMolde, eliminarMoldeBD,
+                    editando_modelo_id, nuevo_modelo_tipo, nuevo_modelo_nombre, 
+                    molde_id_temp, busqueda_molde, mostrar_dropdown_molde, moldes_busqueda, seleccionarMolde, ocultarDropdownMolde,
+                    cantidad_molde_temp, receta_temporal, mensaje_modelo, agregarMoldeReceta, guardarModelo, prepararEdicionModelo, cancelarEdicion, eliminarModeloBD
                 }
             }
         }).mount('#app')
     </script>
 </body>
-</html> 
+</html>

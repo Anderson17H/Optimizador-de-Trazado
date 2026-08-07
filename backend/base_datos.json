@@ -1,61 +1,200 @@
 {
     "moldes": {
-        "DXF-001": {
-            "alias": "Delantero_Prueba",
-            "ruta": "../almacen_dxf/delantero.dxf"
-        },
-        "DXF-002": {
+        "Delantero Camisero L": {
             "alias": "Delantero Camisero L",
             "ruta": "../almacen_dxf/Delantero Camisero L.dxf"
+        },
+        "Delantero Camisero St": {
+            "alias": "Delantero Camisero St",
+            "ruta": "../almacen_dxf/Delantero Camisero St.dxf"
         },
         "Delantero Corazon L": {
             "alias": "Delantero Corazon L",
             "ruta": "../almacen_dxf/Delantero Corazon L.dxf"
         },
-        "Espalda Corazon L": {
-            "alias": "Espalda Corazon L",
-            "ruta": "../almacen_dxf/Espalda Corazon L.dxf"
+        "Delantero Corazon St": {
+            "alias": "Delantero Corazon St",
+            "ruta": "../almacen_dxf/Delantero Corazon St.dxf"
+        },
+        "Delantero Cuadrado L": {
+            "alias": "Delantero Cuadrado L",
+            "ruta": "../almacen_dxf/Delantero Cuadrado L.dxf"
+        },
+        "Delantero Cuadrado St": {
+            "alias": "Delantero Cuadrado St",
+            "ruta": "../almacen_dxf/Delantero Cuadrado St.dxf"
+        },
+        "Delantero Girasol L": {
+            "alias": "Delantero Girasol L",
+            "ruta": "../almacen_dxf/Delantero Girasol L.dxf"
+        },
+        "Delantero Girasol St": {
+            "alias": "Delantero Girasol St",
+            "ruta": "../almacen_dxf/Delantero Girasol St.dxf"
+        },
+        "Delantero Noemi L": {
+            "alias": "Delantero Noemi L",
+            "ruta": "../almacen_dxf/Delantero Noemi L.dxf"
+        },
+        "Delantero Noemi St": {
+            "alias": "Delantero Noemi St",
+            "ruta": "../almacen_dxf/Delantero Noemi St.dxf"
+        },
+        "Delantero Redondo MC L": {
+            "alias": "Delantero Redondo MC L",
+            "ruta": "../almacen_dxf/Delantero Redondo MC L.dxf"
+        },
+        "Delantero Redondo MC St": {
+            "alias": "Delantero Redondo MC St",
+            "ruta": "../almacen_dxf/Delantero Redondo MC St.dxf"
+        },
+        "Delantero Redondo ML L": {
+            "alias": "Delantero Redondo ML L",
+            "ruta": "../almacen_dxf/Delantero Redondo ML L.dxf"
+        },
+        "Delantero Redondo ML St": {
+            "alias": "Delantero Redondo ML St",
+            "ruta": "../almacen_dxf/Delantero Redondo ML St.dxf"
+        },
+        "Delantero Tania L": {
+            "alias": "Delantero Tania L",
+            "ruta": "../almacen_dxf/Delantero Tania L.dxf"
+        },
+        "Delantero Tania St": {
+            "alias": "Delantero Tania St",
+            "ruta": "../almacen_dxf/Delantero Tania St.dxf"
+        },
+        "Espalda Camisero L": {
+            "alias": "Espalda Camisero L",
+            "ruta": "../almacen_dxf/Espalda Camisero L.dxf"
+        },
+        "Espalda Camisero St": {
+            "alias": "Espalda Camisero St",
+            "ruta": "../almacen_dxf/Espalda Camisero St.dxf"
+        },
+        "Espalda Cuadra-Cora-Redon-Tania L": {
+            "alias": "Espalda Cuadra-Cora-Redon-Tania L",
+            "ruta": "../almacen_dxf/Espalda Cuadra-Cora-Redon-Tania L.dxf"
+        },
+        "Espalda Cuadra-Cora-Redon-Tania St": {
+            "alias": "Espalda Cuadra-Cora-Redon-Tania St",
+            "ruta": "../almacen_dxf/Espalda Cuadra-Cora-Redon-Tania St.dxf"
+        },
+        "Espalda Girasol-Noemí L": {
+            "alias": "Espalda Girasol-Noemí L",
+            "ruta": "../almacen_dxf/Espalda Girasol-Noemí L.dxf"
+        },
+        "Espalda Girasol-Noemí St": {
+            "alias": "Espalda Girasol-Noemí St",
+            "ruta": "../almacen_dxf/Espalda Girasol-Noemí St.dxf"
         },
         "Manga Corta L": {
             "alias": "Manga Corta L",
             "ruta": "../almacen_dxf/Manga Corta L.dxf"
+        },
+        "Manga Corta St": {
+            "alias": "Manga Corta St",
+            "ruta": "../almacen_dxf/Manga Corta St.dxf"
+        },
+        "Manga Corta Tania L": {
+            "alias": "Manga Corta Tania L",
+            "ruta": "../almacen_dxf/Manga Corta Tania L.dxf"
+        },
+        "Manga Corta Tania St": {
+            "alias": "Manga Corta Tania St",
+            "ruta": "../almacen_dxf/Manga Corta Tania St.dxf"
+        },
+        "Manga Larga L": {
+            "alias": "Manga Larga L",
+            "ruta": "../almacen_dxf/Manga Larga L.dxf"
+        },
+        "Manga Larga St": {
+            "alias": "Manga Larga St",
+            "ruta": "../almacen_dxf/Manga Larga St.dxf"
+        },
+        "Manga Larga Tania L": {
+            "alias": "Manga Larga Tania L",
+            "ruta": "../almacen_dxf/Manga Larga Tania L.dxf"
+        },
+        "Manga Larga Tania St": {
+            "alias": "Manga Larga Tania St",
+            "ruta": "../almacen_dxf/Manga Larga Tania St.dxf"
         }
     },
     "modelos": {
         "MOD-001": {
-            "nombre": "Prenda de Prueba Talla M",
+            "tipo": "polo",
+            "nombre": "Camisero MC L",
             "receta": [
                 {
-                    "molde_id": "DXF-001",
+                    "molde_id": "Delantero Camisero L",
+                    "cantidad_por_prenda": 2
+                },
+                {
+                    "molde_id": "Espalda Camisero L",
                     "cantidad_por_prenda": 1
+                },
+                {
+                    "molde_id": "Manga Corta L",
+                    "cantidad_por_prenda": 2
                 }
             ]
         },
         "MOD-002": {
             "tipo": "polo",
-            "nombre": "Camisero ",
+            "nombre": "Camisero MC St",
             "receta": [
                 {
-                    "molde_id": "DXF-002",
+                    "molde_id": "Delantero Camisero St",
+                    "cantidad_por_prenda": 2
+                },
+                {
+                    "molde_id": "Espalda Camisero St",
+                    "cantidad_por_prenda": 1
+                },
+                {
+                    "molde_id": "Manga Corta St",
                     "cantidad_por_prenda": 2
                 }
             ]
         },
         "MOD-003": {
             "tipo": "polo",
-            "nombre": "Camisero",
+            "nombre": "Camisero ML L",
             "receta": [
                 {
-                    "molde_id": "DXF-002",
+                    "molde_id": "Delantero Camisero L",
+                    "cantidad_por_prenda": 2
+                },
+                {
+                    "molde_id": "Espalda Camisero L",
                     "cantidad_por_prenda": 1
                 },
                 {
-                    "molde_id": "DXF-001",
+                    "molde_id": "Manga Larga L",
                     "cantidad_por_prenda": 2
                 }
             ]
         },
         "MOD-004": {
+            "tipo": "polo",
+            "nombre": "Camisero ML St",
+            "receta": [
+                {
+                    "molde_id": "Delantero Camisero St",
+                    "cantidad_por_prenda": 2
+                },
+                {
+                    "molde_id": "Espalda Camisero St",
+                    "cantidad_por_prenda": 1
+                },
+                {
+                    "molde_id": "Manga Larga St",
+                    "cantidad_por_prenda": 2
+                }
+            ]
+        },
+        "MOD-005": {
             "tipo": "polo",
             "nombre": "Corazón MC L",
             "receta": [
@@ -64,11 +203,137 @@
                     "cantidad_por_prenda": 2
                 },
                 {
-                    "molde_id": "Espalda Corazon L",
+                    "molde_id": "Espalda Cuadra-Cora-Redon-Tania L",
                     "cantidad_por_prenda": 1
                 },
                 {
                     "molde_id": "Manga Corta L",
+                    "cantidad_por_prenda": 2
+                }
+            ]
+        },
+        "MOD-006": {
+            "tipo": "polo",
+            "nombre": "Corazón MC St",
+            "receta": [
+                {
+                    "molde_id": "Delantero Corazon St",
+                    "cantidad_por_prenda": 2
+                },
+                {
+                    "molde_id": "Espalda Cuadra-Cora-Redon-Tania St",
+                    "cantidad_por_prenda": 1
+                },
+                {
+                    "molde_id": "Manga Corta St",
+                    "cantidad_por_prenda": 2
+                }
+            ]
+        },
+        "MOD-007": {
+            "tipo": "polo",
+            "nombre": "Corazón ML L",
+            "receta": [
+                {
+                    "molde_id": "Delantero Corazon L",
+                    "cantidad_por_prenda": 2
+                },
+                {
+                    "molde_id": "Manga Larga L",
+                    "cantidad_por_prenda": 2
+                },
+                {
+                    "molde_id": "Espalda Cuadra-Cora-Redon-Tania L",
+                    "cantidad_por_prenda": 1
+                }
+            ]
+        },
+        "MOD-008": {
+            "tipo": "polo",
+            "nombre": "Corazón ML St",
+            "receta": [
+                {
+                    "molde_id": "Delantero Corazon St",
+                    "cantidad_por_prenda": 2
+                },
+                {
+                    "molde_id": "Espalda Cuadra-Cora-Redon-Tania St",
+                    "cantidad_por_prenda": 1
+                },
+                {
+                    "molde_id": "Manga Larga St",
+                    "cantidad_por_prenda": 2
+                }
+            ]
+        },
+        "MOD-009": {
+            "tipo": "polo",
+            "nombre": "Cuadrado MC L",
+            "receta": [
+                {
+                    "molde_id": "Delantero Cuadrado L",
+                    "cantidad_por_prenda": 2
+                },
+                {
+                    "molde_id": "Espalda Cuadra-Cora-Redon-Tania L",
+                    "cantidad_por_prenda": 1
+                },
+                {
+                    "molde_id": "Manga Corta L",
+                    "cantidad_por_prenda": 2
+                }
+            ]
+        },
+        "MOD-010": {
+            "tipo": "polo",
+            "nombre": "Cuadrado MC St",
+            "receta": [
+                {
+                    "molde_id": "Delantero Cuadrado St",
+                    "cantidad_por_prenda": 2
+                },
+                {
+                    "molde_id": "Espalda Cuadra-Cora-Redon-Tania St",
+                    "cantidad_por_prenda": 1
+                },
+                {
+                    "molde_id": "Manga Corta St",
+                    "cantidad_por_prenda": 2
+                }
+            ]
+        },
+        "MOD-011": {
+            "tipo": "polo",
+            "nombre": "Cuadrado ML L",
+            "receta": [
+                {
+                    "molde_id": "Delantero Cuadrado L",
+                    "cantidad_por_prenda": 2
+                },
+                {
+                    "molde_id": "Espalda Cuadra-Cora-Redon-Tania L",
+                    "cantidad_por_prenda": 1
+                },
+                {
+                    "molde_id": "Manga Larga L",
+                    "cantidad_por_prenda": 2
+                }
+            ]
+        },
+        "MOD-012": {
+            "tipo": "polo",
+            "nombre": "Cuadrado ML St",
+            "receta": [
+                {
+                    "molde_id": "Delantero Cuadrado St",
+                    "cantidad_por_prenda": 2
+                },
+                {
+                    "molde_id": "Espalda Cuadra-Cora-Redon-Tania St",
+                    "cantidad_por_prenda": 1
+                },
+                {
+                    "molde_id": "Manga Larga St",
                     "cantidad_por_prenda": 2
                 }
             ]

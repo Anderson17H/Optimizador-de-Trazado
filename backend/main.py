@@ -7,7 +7,7 @@ import time
 import base64
 import io
 import matplotlib
-matplotlib.use('Agg') # Modo servidor: dibuja en memoria, sin abrir ventanas
+matplotlib.use('Agg') 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon as MplPolygon
 
@@ -18,22 +18,19 @@ from doblez_optimizer import PiezaTipo, optimizar_doblez, es_pieza_grande_por_no
 from pydantic import BaseModel
 from typing import List, Optional
 
-# 1. El ajuste individual de cada molde (tolerancia)
 class MoldeAjustado(BaseModel):
     molde_id: str
     tolerancia_cm: float = 1.0
 
-# 2. Un modelo dentro de la lista (ej. 10 Pantalones Cargo M)
 class ModeloPedido(BaseModel):
     modelo_id: str
-    cantidad: int
+    cantidad: float 
     ajustes_moldes: List[MoldeAjustado] = []
 
-# 3. El paquete completo que envía el celular/laptop al servidor
 class PeticionOptimizacion(BaseModel):
     ancho_mesa: float
     largo_mesa: float
-    pedidos: List[ModeloPedido] # <--- ¡Aquí está la magia de mezclar modelos!
+    pedidos: List[ModeloPedido] 
 
 app = FastAPI(title="Motor de Corte - Taller")
 
@@ -46,7 +43,6 @@ app.add_middleware(
 )
 
 SISTEMA_OCUPADO = False
-# Aquí guardaremos el estado de cada ticket
 TRABAJOS = {}
 
 @app.get("/")
@@ -57,14 +53,14 @@ def leer_raiz():
 def obtener_modelos():
     ruta_json = os.path.join(os.path.dirname(__file__), "base_datos.json")
     try:
-        with open(ruta_json, "r") as archivo:
+        with open(ruta_json, "r", encoding="utf-8") as archivo:
             datos = json.load(archivo)
             return datos["modelos"]
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Base de datos no encontrada")
 
 # ==========================================
-# NUEVA LÓGICA DE OPTIMIZACIÓN ASÍNCRONA
+# LÓGICA DE OPTIMIZACIÓN ASÍNCRONA
 # ==========================================
 
 def tarea_matematica_pesada(job_id: str, payload: PeticionOptimizacion):
@@ -77,7 +73,7 @@ def tarea_matematica_pesada(job_id: str, payload: PeticionOptimizacion):
             print(f"[Ticket {job_id[:4]}] {mensaje}")
 
     try:
-        with open(ruta_json, "r") as archivo:
+        with open(ruta_json, "r", encoding="utf-8") as archivo:
             datos = json.load(archivo)
             
         moldes_db = datos.get("moldes", {})
@@ -96,7 +92,9 @@ def tarea_matematica_pesada(job_id: str, payload: PeticionOptimizacion):
         # ========================================================
         while True:
             reportar_progreso(f"Evaluando proporción de lote x{factor}...")
-            piezas_tipo = []
+            
+            # NUEVO: Diccionario para agrupar piezas compartidas entre modelos
+            piezas_agrupadas = {}
             
             for pedido in payload.pedidos:
                 if pedido.modelo_id not in datos["modelos"]:
@@ -112,19 +110,33 @@ def tarea_matematica_pesada(job_id: str, payload: PeticionOptimizacion):
                     info_molde = moldes_db[id_molde]
                     ruta_dxf = os.path.join(os.path.dirname(__file__), info_molde["ruta"])
                     
-                    # Aplicamos el multiplicador del lote actual
+                    # Calculamos la cantidad específica requerida por ESTE modelo
                     cantidad_total = item["cantidad_por_prenda"] * pedido.cantidad * factor
                     tolerancia = ajustes_dict.get(id_molde, 1.0)
                     
-                    poligonos = extraer_piezas_dxf(ruta_dxf)
-                    if poligonos:
-                        piezas_tipo.append(PiezaTipo(
-                            alias=info_molde["alias"],
-                            poligono=poligonos[0],
-                            cantidad_necesaria=cantidad_total,
-                            es_pieza_grande=es_pieza_grande_por_nombre(info_molde["alias"]),
-                            tolerancia_cm=tolerancia
-                        ))
+                    # LÓGICA DE AGRUPACIÓN: Si el molde ya existe, sumamos la cantidad
+                    if id_molde in piezas_agrupadas:
+                        piezas_agrupadas[id_molde]["cantidad"] += cantidad_total
+                    else:
+                        poligonos = extraer_piezas_dxf(ruta_dxf)
+                        if poligonos:
+                            piezas_agrupadas[id_molde] = {
+                                "alias": info_molde["alias"],
+                                "poligono": poligonos[0],
+                                "cantidad": cantidad_total,
+                                "tolerancia": tolerancia
+                            }
+
+            # Convertimos el diccionario agrupado a la lista final para el motor NFP
+            piezas_tipo = []
+            for id_m, data in piezas_agrupadas.items():
+                piezas_tipo.append(PiezaTipo(
+                    alias=data["alias"],
+                    poligono=data["poligono"],
+                    cantidad_necesaria=data["cantidad"],
+                    es_pieza_grande=es_pieza_grande_por_nombre(data["alias"]),
+                    tolerancia_cm=data["tolerancia"]
+                ))
 
             if not piezas_tipo:
                 raise ValueError("No se encontraron piezas válidas para optimizar.")
@@ -132,7 +144,6 @@ def tarea_matematica_pesada(job_id: str, payload: PeticionOptimizacion):
             area_total_moldes = sum(p.poligono.area * p.cantidad_necesaria for p in piezas_tipo)
             cota_inferior_largo = area_total_moldes / payload.ancho_mesa
 
-            # Filtro Matemático
             if cota_inferior_largo > payload.largo_mesa:
                 if factor == 1:
                     raise ValueError(f"Imposible: El área mínima requiere {cota_inferior_largo:.1f} cm, pero la mesa tiene {payload.largo_mesa} cm.")
@@ -178,73 +189,105 @@ def tarea_matematica_pesada(job_id: str, payload: PeticionOptimizacion):
             factor += 1
 
         # ========================================================
-        # 2. RENDERIZADO VISUAL EN MEMORIA (Recreando GUI)
+        # 2. RENDERIZADO VISUAL ESTÉTICO (ESCARLÚ STUDIO)
         # ========================================================
         reportar_progreso(f"¡Lote óptimo encontrado (x{mejor_factor})! Generando gráficos...")
         
+        plt.rcParams.update({
+            'font.family': 'sans-serif',
+            'font.size': 6,
+            'text.color': '#1A1A1A',
+            'axes.labelcolor': '#C8A359',
+            'xtick.color': '#1A1A1A',
+            'ytick.color': '#1A1A1A'
+        })
+
+        def aplicar_estilo_mesa(ax, ancho, largo):
+            """Genera la regla milimetrada y bordes dorados"""
+            ax.set_xlim(-5, ancho + 5)
+            ax.set_ylim(-5, largo + 5)
+            ax.set_aspect('equal')
+            
+            # Grilla de fondo (regla)
+            ax.grid(color='#E5E7EB', linestyle='--', linewidth=0.5, zorder=0)
+            
+            # Ocultar marcos superior y derecho, pintar inferior e izquierdo de dorado
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.spines['bottom'].set_color('#C8A359')
+            ax.spines['left'].set_color('#C8A359')
+            
+            # Etiquetas de tamaño
+            ax.set_xlabel('Ancho (cm)', fontsize=6, weight='bold')
+            ax.set_ylabel('Largo (cm)', fontsize=6, weight='bold')
+            ax.tick_params(labelsize=5)
+
         imagenes_b64 = []
         if mejor_resultado_global:
-            # Gráfico Principal
+            
+            # --- GRÁFICO 1: MESA PRINCIPAL ---
             piezas = mejor_resultado_global.piezas_resto_colocadas or []
             if piezas:
-                fig, ax = plt.subplots(figsize=(8, 8))
-                ax.plot([0, payload.ancho_mesa, payload.ancho_mesa, 0, 0], [0, 0, mejor_largo, mejor_largo, 0], 'r--', lw=2)
+                fig, ax = plt.subplots(figsize=(10, 10))
+                
+                # Borde de la tela (Dorado sólido)
+                ax.plot([0, payload.ancho_mesa, payload.ancho_mesa, 0, 0], [0, 0, mejor_largo, mejor_largo, 0], color='#C8A359', linestyle='-', linewidth=1.5, zorder=1)
 
                 for p_tupla in piezas:
                     p = p_tupla[0]
-                    alias = p_tupla[1]
+                    alias = str(p_tupla[1]).replace('_', ' ') # Limpia nombres
                     x, y = p.exterior.xy
                     
                     es_caja_doblez = id(p) == getattr(mejor_resultado_global, 'id_caja_doblez', None)
-                    color_fondo = 'plum' if es_caja_doblez else 'lightblue'
                     
-                    poligono_dibujo = MplPolygon(list(zip(x, y)), closed=True, edgecolor='black', facecolor=color_fondo, alpha=0.7)
+                    # Colores de la marca: Dorado claro para caja, Rosa suave para moldes
+                    color_fondo = '#DFBC77' if es_caja_doblez else '#FDEBED'
+                    transparencia = 0.6 if es_caja_doblez else 0.85
+                    
+                    poligono_dibujo = MplPolygon(list(zip(x, y)), closed=True, edgecolor='#1A1A1A', facecolor=color_fondo, alpha=transparencia, linewidth=0.6, zorder=2)
                     ax.add_patch(poligono_dibujo)
                     
+                    # Texto minimalista
                     cx, cy = p.centroid.x, p.centroid.y
                     texto = "CAJA DOBLEZ" if es_caja_doblez else alias
-                    ax.text(cx, cy, texto, ha='center', va='center', fontsize=8, fontweight='bold', color='black', wrap=True)
+                    ax.text(cx, cy, texto, ha='center', va='center', fontsize=4.5, color='#1A1A1A', weight='normal', wrap=True, zorder=3)
 
-                ax.set_xlim(-10, payload.ancho_mesa + 10)
-                ax.set_ylim(-10, mejor_largo + 20)
-                ax.set_aspect('equal')
-                ax.axis('off') # Diseño limpio para web
+                aplicar_estilo_mesa(ax, payload.ancho_mesa, mejor_largo)
                 
                 buf = io.BytesIO()
-                plt.savefig(buf, format='png', bbox_inches='tight', dpi=150)
+                # transparent=True quita el fondo blanco duro detrás de la regla
+                plt.savefig(buf, format='png', bbox_inches='tight', dpi=200, transparent=True)
                 plt.close(fig)
                 buf.seek(0)
                 imagenes_b64.append(f"data:image/png;base64,{base64.b64encode(buf.read()).decode('utf-8')}")
 
-            # Gráfico Secundario (Doblez)
+            # --- GRÁFICO 2: MESA DE DOBLEZ ---
             if mejor_resultado_global.piezas_doblez_colocadas:
                 piezas_dob = mejor_resultado_global.piezas_doblez_colocadas
                 largo_dob = max(p[0].bounds[3] for p in piezas_dob)
-                fig2, ax2 = plt.subplots(figsize=(8, 8))
-                ax2.plot([0, payload.ancho_mesa, payload.ancho_mesa, 0, 0], [0, 0, largo_dob, largo_dob, 0], 'g--', lw=2)
+                
+                fig2, ax2 = plt.subplots(figsize=(10, 10))
+                # Borde del doblez (Dorado punteado)
+                ax2.plot([0, payload.ancho_mesa, payload.ancho_mesa, 0, 0], [0, 0, largo_dob, largo_dob, 0], color='#C8A359', linestyle='--', linewidth=1.5, zorder=1)
                 
                 for p_tupla in piezas_dob:
                     p = p_tupla[0]
-                    alias = p_tupla[1]
+                    alias = str(p_tupla[1]).replace('_', ' ')
                     x, y = p.exterior.xy
-                    poligono_dibujo = MplPolygon(list(zip(x, y)), closed=True, edgecolor='black', facecolor='lightgreen', alpha=0.7)
+                    
+                    # Blanco hueso para piezas en el doblez
+                    poligono_dibujo = MplPolygon(list(zip(x, y)), closed=True, edgecolor='#1A1A1A', facecolor='#FFF8F8', alpha=0.9, linewidth=0.6, zorder=2)
                     ax2.add_patch(poligono_dibujo)
-                    ax2.text(p.centroid.x, p.centroid.y, alias, ha='center', va='center', fontsize=8, fontweight='bold', color='black')
+                    ax2.text(p.centroid.x, p.centroid.y, alias, ha='center', va='center', fontsize=4.5, color='#1A1A1A', weight='normal', wrap=True, zorder=3)
 
-                ax2.set_xlim(-10, payload.ancho_mesa + 10)
-                ax2.set_ylim(-10, largo_dob + 20)
-                ax2.set_aspect('equal')
-                ax2.axis('off')
+                aplicar_estilo_mesa(ax2, payload.ancho_mesa, largo_dob)
                 
                 buf2 = io.BytesIO()
-                plt.savefig(buf2, format='png', bbox_inches='tight', dpi=150)
+                plt.savefig(buf2, format='png', bbox_inches='tight', dpi=200, transparent=True)
                 plt.close(fig2)
                 buf2.seek(0)
                 imagenes_b64.append(f"data:image/png;base64,{base64.b64encode(buf2.read()).decode('utf-8')}")
 
-        # ========================================================
-        # 3. ENVÍO DEL RESULTADO AL FRONTEND
-        # ========================================================
         TRABAJOS[job_id] = {
             "estado": "completado",
             "progreso": f"¡Lote x{mejor_factor} Optimizado!",
@@ -262,7 +305,6 @@ def tarea_matematica_pesada(job_id: str, payload: PeticionOptimizacion):
     finally:
         SISTEMA_OCUPADO = False
 
-
 @app.post("/api/optimizar")
 def iniciar_optimizacion(payload: PeticionOptimizacion, background_tasks: BackgroundTasks):
     global SISTEMA_OCUPADO
@@ -275,59 +317,55 @@ def iniciar_optimizacion(payload: PeticionOptimizacion, background_tasks: Backgr
     job_id = str(uuid.uuid4())
     TRABAJOS[job_id] = {"estado": "iniciando", "progreso": "Preparando motor..."}
     
-    # Enviamos el paquete completo de datos (payload) a la función de fondo
     background_tasks.add_task(tarea_matematica_pesada, job_id, payload)
     
     return {"mensaje": "Orden recibida", "job_id": job_id}
 
-
 @app.get("/api/estado/{job_id}")
 def consultar_estado(job_id: str):
-    """ El celular consultará esta ruta cada 5 segundos para ver cómo va """
     if job_id not in TRABAJOS:
         raise HTTPException(status_code=404, detail="Ticket no encontrado")
-    
     return TRABAJOS[job_id]
 
 # ==========================================
-# NUEVAS RUTAS: FLUJO 1 (CONFIGURACIÓN)
+# RUTAS DE FLUJO 1 (CONFIGURACIÓN)
 # ==========================================
 
 @app.post("/api/moldes/subir")
-async def subir_molde_dxf(archivo: UploadFile = File(...)):
+async def subir_molde_dxf(archivos: List[UploadFile] = File(...)):
     ruta_json = os.path.join(os.path.dirname(__file__), "base_datos.json")
     carpeta_dxf = os.path.join(os.path.dirname(__file__), "..", "almacen_dxf")
     os.makedirs(carpeta_dxf, exist_ok=True)
     
-    ruta_archivo_fisico = os.path.join(carpeta_dxf, archivo.filename)
-    try:
-        with open(ruta_archivo_fisico, "wb") as buffer:
-            contenido = await archivo.read()
-            buffer.write(contenido)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"No se pudo guardar: {str(e)}")
-
-    # Extraemos el nombre original sin la extensión .dxf
-    nombre_sin_ext = os.path.splitext(archivo.filename)[0]
-    nuevo_id_molde = nombre_sin_ext # Usaremos el mismo nombre como ID
-    
     with open(ruta_json, "r", encoding="utf-8") as f:
         datos = json.load(f)
         
-    ruta_relativa = f"../almacen_dxf/{archivo.filename}"
-    datos["moldes"][nuevo_id_molde] = {
-        "alias": nombre_sin_ext,
-        "ruta": ruta_relativa
-    }
+    nombres_guardados = []
     
+    for archivo in archivos:
+        ruta_archivo_fisico = os.path.join(carpeta_dxf, archivo.filename)
+        try:
+            with open(ruta_archivo_fisico, "wb") as buffer:
+                contenido = await archivo.read()
+                buffer.write(contenido)
+        except Exception as e:
+            print(f"Error guardando {archivo.filename}: {e}")
+            continue
+
+        nombre_sin_ext = os.path.splitext(archivo.filename)[0]
+        datos["moldes"][nombre_sin_ext] = {
+            "alias": nombre_sin_ext,
+            "ruta": f"../almacen_dxf/{archivo.filename}"
+        }
+        nombres_guardados.append(nombre_sin_ext)
+        
     with open(ruta_json, "w", encoding="utf-8") as f:
         json.dump(datos, f, indent=4, ensure_ascii=False)
         
-    return {"mensaje": "Molde guardado", "molde_id": nuevo_id_molde}
+    return {"mensaje": f"{len(nombres_guardados)} moldes guardados exitosamente", "moldes_ids": nombres_guardados}
 
 @app.get("/api/moldes")
 def obtener_moldes():
-    """Devuelve la lista de moldes para llenar el desplegable del frontend"""
     ruta_json = os.path.join(os.path.dirname(__file__), "base_datos.json")
     try:
         with open(ruta_json, "r", encoding="utf-8") as f:
@@ -336,30 +374,24 @@ def obtener_moldes():
     except FileNotFoundError:
         return {}
 
-
 class RecetaItem(BaseModel):
     molde_id: str
     cantidad_por_prenda: int
 
 class NuevoModeloRequest(BaseModel):
-    tipo: str  # polo, short, chompa, buzo
-    nombre: str # Ej: Polo Cuello V - Talla M
+    tipo: str  
+    nombre: str 
     receta: list[RecetaItem]
 
 @app.post("/api/modelos/crear")
 def crear_nuevo_modelo(payload: NuevoModeloRequest):
-    """
-    Crea una nueva receta/modelo combinando los moldes existentes en la base de datos.
-    """
     ruta_json = os.path.join(os.path.dirname(__file__), "base_datos.json")
     
     with open(ruta_json, "r", encoding="utf-8") as f:
         datos = json.load(f)
         
-    # Generar un ID único para el modelo (ej. MOD-002)
     nuevo_id_modelo = f"MOD-{len(datos['modelos']) + 1:03d}"
     
-    # Formatear la receta para que encaje exactamente con la estructura actual
     receta_formateada = [
         {"molde_id": item.molde_id, "cantidad_por_prenda": item.cantidad_por_prenda}
         for item in payload.receta
@@ -376,19 +408,13 @@ def crear_nuevo_modelo(payload: NuevoModeloRequest):
         
     return {"mensaje": "Modelo creado con éxito", "modelo_id": nuevo_id_modelo}
 
-# ==========================================
-# RUTAS DE EDICIÓN Y ELIMINACIÓN (CRUD)
-# ==========================================
-
 @app.delete("/api/moldes/{molde_id}")
 def eliminar_molde(molde_id: str):
-    """Elimina un molde del registro de la base de datos."""
     ruta_json = os.path.join(os.path.dirname(__file__), "base_datos.json")
     with open(ruta_json, "r", encoding="utf-8") as f:
         datos = json.load(f)
     
     if molde_id in datos.get("moldes", {}):
-        # Eliminamos el registro del JSON (opcional: podrías agregar código para borrar el .dxf físico)
         del datos["moldes"][molde_id]
         with open(ruta_json, "w", encoding="utf-8") as f:
             json.dump(datos, f, indent=4, ensure_ascii=False)
@@ -398,7 +424,6 @@ def eliminar_molde(molde_id: str):
 
 @app.delete("/api/modelos/{modelo_id}")
 def eliminar_modelo(modelo_id: str):
-    """Elimina una receta/modelo completo."""
     ruta_json = os.path.join(os.path.dirname(__file__), "base_datos.json")
     with open(ruta_json, "r", encoding="utf-8") as f:
         datos = json.load(f)
@@ -413,7 +438,6 @@ def eliminar_modelo(modelo_id: str):
 
 @app.put("/api/modelos/{modelo_id}")
 def editar_modelo(modelo_id: str, payload: NuevoModeloRequest):
-    """Sobreescribe un modelo existente con nueva información o moldes."""
     ruta_json = os.path.join(os.path.dirname(__file__), "base_datos.json")
     with open(ruta_json, "r", encoding="utf-8") as f:
         datos = json.load(f)
@@ -421,13 +445,11 @@ def editar_modelo(modelo_id: str, payload: NuevoModeloRequest):
     if modelo_id not in datos.get("modelos", {}):
         raise HTTPException(status_code=404, detail="Modelo no encontrado")
         
-    # Formatear la nueva receta
     receta_formateada = [
         {"molde_id": item.molde_id, "cantidad_por_prenda": item.cantidad_por_prenda}
         for item in payload.receta
     ]
     
-    # Sobreescribimos los datos
     datos["modelos"][modelo_id] = {
         "tipo": payload.tipo,
         "nombre": payload.nombre,

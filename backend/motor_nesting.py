@@ -72,7 +72,6 @@ def generar_angulos_por_aplome(tolerancia_cm, alto_molde, paso_rot=1):
 def generar_ordenes_estrategicos(piezas):
     por_area = sorted(piezas, key=lambda p: p[0].area, reverse=True)
     por_altura = sorted(piezas, key=lambda p: (p[0].bounds[3] - p[0].bounds[1]), reverse=True)
-    
     intercalado = []
     if len(por_area) > 2:
         izq, der = 0, len(por_area) - 1
@@ -85,8 +84,19 @@ def generar_ordenes_estrategicos(piezas):
             usar_izq = not usar_izq
     else:
         intercalado = por_area[:]
-        
-    return [por_area, por_altura, intercalado]
+
+    # NUEVO: grande-chica-grande-chica estricto (round-robin por tamaño real)
+    grandes = [p for p in por_area if p[0].area >= sum(x[0].area for x in por_area) / len(por_area)]
+    chicas = [p for p in por_area if p not in grandes]
+    round_robin = []
+    ig, ic = 0, 0
+    while ig < len(grandes) or ic < len(chicas):
+        if ig < len(grandes):
+            round_robin.append(grandes[ig]); ig += 1
+        if ic < len(chicas):
+            round_robin.append(chicas[ic]); ic += 1
+
+    return [por_area, por_altura, intercalado, round_robin]
 
 # ==========================================================
 # 3. LÓGICA DE EMPAQUETADO EXACTO Y PODA ANTICIPADA
@@ -195,6 +205,31 @@ def empaquetar_un_orden(piezas_ordenadas, ancho_mesa, tolerancia_cm, paso_rot, v
 
     return piezas_colocadas_finales
 
+def identificar_indices_criticos(orden_piezas, resultado_colocado, margen=5.0):
+    """
+    Devuelve los índices (dentro de orden_piezas) de las piezas que están
+    tocando el borde superior del tizado actual (las que definen el largo total).
+    Estas son las piezas 'candidatas' a moverse para reducir el largo.
+    """
+    if not resultado_colocado:
+        return []
+
+    largo_max = max(p[0].bounds[3] for p in resultado_colocado)
+    alias_criticos = [
+        alias for (poligono, alias) in resultado_colocado
+        if poligono.bounds[3] >= largo_max - margen
+    ]
+
+    # Mapeamos alias -> índices dentro del orden original (puede haber duplicados de alias)
+    indices_criticos = []
+    aliases_restantes = list(alias_criticos)
+    for idx, (poligono, alias, tolerancia) in enumerate(orden_piezas):
+        if alias in aliases_restantes:
+            indices_criticos.append(idx)
+            aliases_restantes.remove(alias)
+
+    return indices_criticos
+
 def optimizar_nesting_completo(piezas_originales, ancho_mesa, tolerancia_rot=2.0, paso_rot=1,
                                 valor_buffer=0.1, n_ordenes_aleatorios=4, max_intercambios=15,
                                 callback_progreso=None, largo_maximo=float('inf'), caja_doblez=None):
@@ -253,34 +288,47 @@ def optimizar_nesting_completo(piezas_originales, ancho_mesa, tolerancia_rot=2.0
                 mejor_largo_global = largo_prueba
                 mejor_resultado_global = resultado_prueba
 
-        # --- FASE 2: COMPRESIÓN E INTERLOCKING ---
+        # --- FASE 2: COMPRESIÓN E INTERLOCKING (DIRIGIDA) ---
         if mejor_orden_local is not None and max_intercambios > 0 and len(mejor_orden_local) > 1:
             orden_base = list(mejor_orden_local)
-            
+            resultado_base = None  # guardamos el último resultado colocado para identificar críticos
+
             for i in range(max_intercambios):
                 if callback_progreso:
-                    msg_swap = f"Compresión {i+1}/{max_intercambios}"
+                    msg_swap = f"Compresión dirigida {i+1}/{max_intercambios}"
                     if caja_doblez:
                         msg_swap += f" | Caja en X: {pos_x:.1f}"
                     callback_progreso(msg_swap)
-                
-                import random
-                idx1, idx2 = random.sample(range(len(orden_base)), 2)
+
+                # --- SELECCIÓN DIRIGIDA ---
+                indices_criticos = identificar_indices_criticos(orden_base, resultado_base) if resultado_base else []
+
+                if indices_criticos and random.random() < 0.75:
+                    # 75% de las veces: forzamos que UNO de los dos índices sea una pieza crítica
+                    idx1 = random.choice(indices_criticos)
+                    idx2 = random.randrange(len(orden_base))
+                    while idx2 == idx1:
+                        idx2 = random.randrange(len(orden_base))
+                else:
+                    # 25% de las veces: exploración libre (para no perder diversidad y evitar overfitting local)
+                    idx1, idx2 = random.sample(range(len(orden_base)), 2)
+
                 orden_mutado = list(orden_base)
                 orden_mutado[idx1], orden_mutado[idx2] = orden_mutado[idx2], orden_mutado[idx1]
-                
+
                 resultado_prueba = empaquetar_un_orden(orden_mutado, ancho_mesa, tolerancia_rot, paso_rot, valor_buffer, largo_maximo, caja_doblez, pos_x)
-                
+
                 if resultado_prueba is None:
                     continue
-                
+
                 largo_prueba = max([p[0].bounds[3] for p in resultado_prueba]) if resultado_prueba else float('inf')
-                
+
                 if largo_prueba < mejor_largo_local:
                     mejor_largo_local = largo_prueba
                     mejor_orden_local = orden_mutado
                     orden_base = orden_mutado
-                    
+                    resultado_base = resultado_prueba  # actualizamos referencia para recalcular críticos
+
                 if largo_prueba < mejor_largo_global:
                     mejor_largo_global = largo_prueba
                     mejor_resultado_global = resultado_prueba

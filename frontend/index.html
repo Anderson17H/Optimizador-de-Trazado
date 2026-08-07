@@ -13,9 +13,8 @@
 
     <div id="app" class="flex h-full">
 
-        <!-- SIDEBAR (Panel Izquierdo de Navegación) -->
+        <!-- SIDEBAR -->
         <aside class="w-64 bg-[#fdf2f4] border-r border-pink-100 flex flex-col shadow-sm z-20">
-            <!-- Zona del Logo -->
             <div class="p-8 flex flex-col items-center border-b border-pink-200">
                 <div class="w-20 h-20 bg-pink-200 rounded-full mb-3 flex items-center justify-center shadow-inner">
                     <span class="text-pink-800 font-black text-xl">ESC</span>
@@ -24,42 +23,29 @@
                 <p class="text-xs text-gray-500 uppercase tracking-wider mt-1">Producción</p>
             </div>
             
-            <!-- Menú de Opciones -->
             <nav class="flex-1 px-4 py-6 space-y-2">
-                <button @click="vista_actual = 'optimizador'" 
-                        :class="vista_actual === 'optimizador' ? 'bg-[#f8d7da] text-gray-900 font-bold shadow-sm' : 'text-gray-600 hover:bg-pink-100'"
-                        class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left">
+                <button @click="vista_actual = 'optimizador'" :class="vista_actual === 'optimizador' ? 'bg-[#f8d7da] text-gray-900 font-bold shadow-sm' : 'text-gray-600 hover:bg-pink-100'" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left">
                     <span>✂️</span> Optimizador de Trazado
                 </button>
-
-                <button @click="vista_actual = 'digitalizador'" 
-                        :class="vista_actual === 'digitalizador' ? 'bg-[#f8d7da] text-gray-900 font-bold shadow-sm' : 'text-gray-600 hover:bg-pink-100'"
-                        class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left">
+                <button @click="vista_actual = 'digitalizador'" :class="vista_actual === 'digitalizador' ? 'bg-[#f8d7da] text-gray-900 font-bold shadow-sm' : 'text-gray-600 hover:bg-pink-100'" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left">
                     <span>📸</span> Digitalizador DXF
                 </button>
-
-                <button @click="vista_actual = 'administrar'" 
-                        :class="vista_actual === 'administrar' ? 'bg-[#f8d7da] text-gray-900 font-bold shadow-sm' : 'text-gray-600 hover:bg-pink-100'"
-                        class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left">
+                <button @click="vista_actual = 'administrar'" :class="vista_actual === 'administrar' ? 'bg-[#f8d7da] text-gray-900 font-bold shadow-sm' : 'text-gray-600 hover:bg-pink-100'" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left">
                     <span>⚙️</span> Ajustes / Moldes
                 </button>
             </nav>
 
-            <!-- Usuario al fondo -->
             <div class="p-4 border-t border-pink-200 text-sm text-gray-500 flex items-center gap-2">
                 <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-white font-bold">A</div>
                 <span>Administrador</span>
             </div>
         </aside>
 
-        <!-- MAIN (Área de Contenido Derecha) -->
+        <!-- MAIN CONTENT -->
         <main class="flex-1 flex flex-col h-full bg-gray-50 relative overflow-hidden">
             
-            <!-- ========================================== -->
-            <!-- VISTA 1: EL OPTIMIZADOR                    -->
-            <!-- ========================================== -->
+            <!-- VISTA 1: EL OPTIMIZADOR -->
             <div v-show="vista_actual === 'optimizador'" class="flex h-full w-full">
-                
                 <!-- Panel del Visor (Izquierda) -->
                 <div class="w-2/3 bg-white flex flex-col border-r border-gray-200 shadow-lg z-10">
                     <header class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
@@ -70,30 +56,20 @@
                     </header>
                     
                     <div class="flex-1 p-8 flex flex-col items-center justify-center bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CjxyZWN0IHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0ibm9uZSIvPgo8Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIxIiBmaWxsPSIjZTElMTIxIi8+Cjwvc3ZnPg==')] overflow-y-auto">
-                        
-                        <!-- Estado 1: En Espera -->
                         <div v-if="!optimizando && !resultado_final" class="text-center text-gray-400">
                             <p class="text-lg font-semibold">Agrega modelos al carrito y presiona Optimizar</p>
                         </div>
 
-                        <!-- Estado 2: Calculando (Barra de progreso) -->
                         <div v-if="optimizando" class="w-3/4 bg-white p-8 rounded-xl shadow-xl border border-gray-200 text-center">
                             <h2 class="text-2xl font-bold text-gray-800 mb-6">Procesando Trazado...</h2>
-                            
-                            <!-- Barra animada -->
                             <div class="w-full bg-gray-200 rounded-full h-4 mb-4 overflow-hidden relative">
                                 <div class="absolute top-0 left-0 h-4 bg-[#f8d7da] w-full animate-pulse"></div>
-                                <!-- Efecto de carga indeterminada -->
                                 <div class="absolute top-0 left-0 h-4 bg-pink-500 w-1/3 animate-[bounce_1s_infinite_linear] rounded-full"></div>
                             </div>
-                            
                             <p class="text-pink-700 font-bold text-lg uppercase tracking-wide">{{ progreso_actual }}</p>
                         </div>
 
-                        <!-- Estado 3: Resultados y Gráficos -->
                         <div v-if="resultado_final && !optimizando" class="w-full h-full flex flex-col">
-                            
-                            <!-- Etiqueta de Eficiencia Superior -->
                             <div class="bg-gray-900 text-white rounded-xl shadow-lg p-5 mb-6 flex justify-between items-center w-full">
                                 <div>
                                     <h2 class="text-2xl font-black tracking-wider text-pink-300">TIZADO COMPLETADO</h2>
@@ -111,18 +87,15 @@
                                 </div>
                             </div>
 
-                            <!-- Contenedor de las Imágenes generadas -->
                             <div class="flex-1 w-full space-y-6">
                                 <div v-for="(img_base64, index) in resultado_final.imagenes" :key="index" class="bg-white border-2 border-dashed border-gray-300 p-4 rounded-xl shadow-sm relative">
                                     <span class="absolute -top-3 left-4 bg-white px-2 text-xs font-bold text-gray-500 uppercase">
                                         {{ resultado_final.imagenes.length > 1 && index === 0 ? 'Trazo 1 (Caja / Doblez)' : (resultado_final.imagenes.length > 1 ? 'Trazo 2 (Resto)' : 'Trazo Único') }}
                                     </span>
-                                    <!-- Aquí se inyecta la imagen desde el backend -->
                                     <img :src="img_base64" class="w-full h-auto object-contain bg-gray-50" alt="Gráfico del trazo">
                                 </div>
                             </div>
                         </div>
-
                     </div>
                 </div>
 
@@ -163,7 +136,7 @@
                             </div>
                             <div class="flex gap-4">
                                 <div class="w-1/2">
-                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Prendas</label>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Prendas (Lote Base)</label>
                                     <input type="number" min="1" v-model="cantidad_seleccionada" class="w-full border-gray-300 rounded bg-gray-50 p-2 border">
                                 </div>
                                 <div class="w-1/2 flex items-end">
@@ -203,9 +176,7 @@
                 </div>
             </div>
 
-            <!-- ========================================== -->
-            <!-- VISTA 2: EL DIGITALIZADOR                  -->
-            <!-- ========================================== -->
+            <!-- VISTA 2: EL DIGITALIZADOR -->
             <div v-show="vista_actual === 'digitalizador'" class="h-full w-full flex flex-col p-8 overflow-y-auto">
                 <header class="mb-8">
                     <h2 class="text-3xl font-black text-gray-800">Digitalizador de Moldes</h2>
@@ -216,35 +187,49 @@
                 </div>
             </div>
 
-            <!-- ========================================== -->
-            <!-- VISTA 3: ADMINISTRADOR DE MOLDES           -->
-            <!-- ========================================== -->
+            <!-- VISTA 3: ADMINISTRADOR DE MOLDES (CON PESTAÑAS Y CRUD) -->
             <div v-show="vista_actual === 'administrar'" class="h-full w-full flex flex-col p-8 overflow-y-auto">
-                <header class="mb-8">
+                <header class="mb-6">
                     <h2 class="text-3xl font-black text-gray-800">Administración de Base de Datos</h2>
-                    <p class="text-gray-500 mt-2">Carga nuevos archivos DXF y arma las recetas de los modelos.</p>
+                    <p class="text-gray-500 mt-2">Gestión total de archivos DXF y recetas de modelos.</p>
                 </header>
+
+                <!-- Menú de Sub-Pestañas Internas -->
+                <div class="flex gap-6 border-b border-gray-300 mb-6">
+                    <button @click="sub_vista_admin = 'crear'" :class="sub_vista_admin === 'crear' ? 'border-b-4 border-pink-500 text-pink-700 font-bold' : 'text-gray-500 hover:text-gray-800'" class="pb-2 px-2 transition-all">
+                        ➕ Nuevo / Formulario
+                    </button>
+                    <button @click="sub_vista_admin = 'modelos'" :class="sub_vista_admin === 'modelos' ? 'border-b-4 border-pink-500 text-pink-700 font-bold' : 'text-gray-500 hover:text-gray-800'" class="pb-2 px-2 transition-all">
+                        📋 Lista de Modelos (Recetas)
+                    </button>
+                    <button @click="sub_vista_admin = 'moldes'" :class="sub_vista_admin === 'moldes' ? 'border-b-4 border-pink-500 text-pink-700 font-bold' : 'text-gray-500 hover:text-gray-800'" class="pb-2 px-2 transition-all">
+                        📁 Lista de Moldes (DXF)
+                    </button>
+                </div>
                 
-                <div class="grid grid-cols-2 gap-8 flex-1">
-                    
-                    <!-- Tarjeta Izquierda: Subir Moldes DXF -->
+                <!-- SUB-VISTA: Formulario de Creación / Edición -->
+                <div v-show="sub_vista_admin === 'crear'" class="grid grid-cols-2 gap-8 flex-1">
+                    <!-- Izquierda: Subir Moldes DXF -->
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col h-min">
                         <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">1. Subir Nuevo Molde (DXF)</h3>
-                        
                         <div class="mb-6">
                             <label class="block text-sm font-bold text-gray-600 mb-1">Archivo de AutoCAD (.dxf)</label>
                             <input type="file" @change="capturarArchivo" accept=".dxf" class="w-full border border-gray-300 rounded p-2 text-sm bg-gray-50 focus:outline-none">
                         </div>
-                        
                         <button @click="subirMolde" :disabled="!archivo_dxf" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">
                             ⬆️ Guardar Molde
                         </button>
                         <p v-if="mensaje_molde" class="mt-3 text-sm font-bold text-green-600 text-center bg-green-50 py-1 rounded">{{ mensaje_molde }}</p>
                     </div>
 
-                    <!-- Tarjeta Derecha: Crear Modelo (Receta) -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col">
-                        <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">2. Crear Nuevo Modelo (Receta)</h3>
+                    <!-- Derecha: Crear/Editar Modelo -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col" :class="{'border-blue-300 shadow-blue-100': editando_modelo_id}">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2 flex justify-between">
+                            <span v-if="!editando_modelo_id">2. Crear Nuevo Modelo</span>
+                            <span v-else class="text-blue-600">✏️ Editando: {{ editando_modelo_id }}</span>
+                            
+                            <button v-if="editando_modelo_id" @click="cancelarEdicion" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-800 px-2 py-1 rounded">Cancelar Edición</button>
+                        </h3>
                         
                         <div class="grid grid-cols-2 gap-4 mb-4">
                             <div>
@@ -264,17 +249,13 @@
                         </div>
 
                         <div class="bg-gray-50 p-4 rounded border mb-4 flex-1">
-                            <h4 class="font-bold text-sm text-gray-700 mb-2">Añadir piezas a la receta</h4>
+                            <h4 class="font-bold text-sm text-gray-700 mb-2">Piezas de la receta</h4>
                             
                             <div class="flex gap-2 mb-4">
-                                <!-- Desplegable automático de moldes guardados -->
                                 <select v-model="molde_id_temp" class="w-1/2 border border-gray-300 rounded p-2 text-sm focus:border-pink-300">
                                     <option disabled value="">-- Elegir Pieza --</option>
-                                    <option v-for="(info, id) in moldes_disponibles" :key="id" :value="id">
-                                        {{ info.alias }}
-                                    </option>
+                                    <option v-for="(info, id) in moldes_disponibles" :key="id" :value="id">{{ info.alias }}</option>
                                 </select>
-
                                 <input type="number" v-model="cantidad_molde_temp" min="1" placeholder="Cant." class="w-1/4 border border-gray-300 rounded p-2 text-sm focus:border-pink-300">
                                 <button @click="agregarMoldeReceta" :disabled="!molde_id_temp" class="w-1/4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-bold rounded text-sm transition-colors">+</button>
                             </div>
@@ -288,13 +269,86 @@
                             </ul>
                         </div>
 
-                        <button @click="crearModelo" :disabled="!nuevo_modelo_tipo || !nuevo_modelo_nombre || receta_temporal.length === 0" class="w-full bg-[#e8a3a9] hover:bg-[#d6858c] text-white font-black text-lg py-4 rounded-xl shadow transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">
-                            💾 Guardar Nuevo Modelo
+                        <button @click="guardarModelo" :disabled="!nuevo_modelo_tipo || !nuevo_modelo_nombre || receta_temporal.length === 0" :class="editando_modelo_id ? 'bg-blue-600 hover:bg-blue-700' : 'bg-[#e8a3a9] hover:bg-[#d6858c]'" class="w-full text-white font-black text-lg py-4 rounded-xl shadow transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">
+                            {{ editando_modelo_id ? '💾 Actualizar Modelo' : '💾 Guardar Nuevo Modelo' }}
                         </button>
                         <p v-if="mensaje_modelo" class="mt-3 text-sm font-bold text-green-600 text-center bg-green-50 py-1 rounded">{{ mensaje_modelo }}</p>
                     </div>
-
                 </div>
+
+                <!-- SUB-VISTA: Lista de Modelos (CRUD) -->
+                <div v-show="sub_vista_admin === 'modelos'" class="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                    <div class="p-6 border-b bg-gray-50 flex justify-between items-center">
+                        <h3 class="text-xl font-bold text-gray-800">Directorio de Modelos</h3>
+                        <span class="text-sm text-gray-500">{{ Object.keys(modelos_disponibles).length }} registrados</span>
+                    </div>
+                    <div class="p-6 flex-1 overflow-y-auto">
+                        <table class="w-full text-left text-sm text-gray-600">
+                            <thead class="text-xs text-gray-500 uppercase bg-gray-100">
+                                <tr>
+                                    <th class="px-4 py-3">ID</th>
+                                    <th class="px-4 py-3">Nombre</th>
+                                    <th class="px-4 py-3">Tipo</th>
+                                    <th class="px-4 py-3">Piezas (Receta)</th>
+                                    <th class="px-4 py-3 text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-if="Object.keys(modelos_disponibles).length === 0">
+                                    <td colspan="5" class="text-center py-4 text-gray-400">No hay modelos registrados.</td>
+                                </tr>
+                                <tr v-for="(datos, id) in modelos_disponibles" :key="id" class="border-b hover:bg-gray-50">
+                                    <td class="px-4 py-3 font-mono text-xs font-bold">{{ id }}</td>
+                                    <td class="px-4 py-3 font-bold text-gray-800">{{ datos.nombre }}</td>
+                                    <td class="px-4 py-3 uppercase text-xs">{{ datos.tipo }}</td>
+                                    <td class="px-4 py-3">
+                                        <div class="flex flex-wrap gap-1">
+                                            <span v-for="pieza in datos.receta" :key="pieza.molde_id" class="bg-pink-50 text-pink-700 border border-pink-200 px-2 py-0.5 rounded text-[10px] font-semibold">
+                                                {{ pieza.molde_id }} (x{{ pieza.cantidad_por_prenda }})
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3 text-right space-x-2">
+                                        <button @click="prepararEdicionModelo(id)" class="text-blue-600 hover:text-blue-800 font-bold uppercase text-xs">Editar</button>
+                                        <button @click="eliminarModeloBD(id)" class="text-red-600 hover:text-red-800 font-bold uppercase text-xs">Borrar</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- SUB-VISTA: Lista de Moldes (CRUD) -->
+                <div v-show="sub_vista_admin === 'moldes'" class="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                    <div class="p-6 border-b bg-gray-50 flex justify-between items-center">
+                        <h3 class="text-xl font-bold text-gray-800">Directorio de Archivos DXF</h3>
+                        <span class="text-sm text-gray-500">{{ Object.keys(moldes_disponibles).length }} archivos físicos</span>
+                    </div>
+                    <div class="p-6 flex-1 overflow-y-auto">
+                        <table class="w-full text-left text-sm text-gray-600">
+                            <thead class="text-xs text-gray-500 uppercase bg-gray-100">
+                                <tr>
+                                    <th class="px-4 py-3">Nombre Físico / ID</th>
+                                    <th class="px-4 py-3">Ruta Interna</th>
+                                    <th class="px-4 py-3 text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-if="Object.keys(moldes_disponibles).length === 0">
+                                    <td colspan="3" class="text-center py-4 text-gray-400">No hay moldes subidos.</td>
+                                </tr>
+                                <tr v-for="(info, id) in moldes_disponibles" :key="id" class="border-b hover:bg-gray-50">
+                                    <td class="px-4 py-3 font-mono font-bold text-gray-800">{{ id }}</td>
+                                    <td class="px-4 py-3 text-xs text-gray-400">{{ info.ruta }}</td>
+                                    <td class="px-4 py-3 text-right">
+                                        <button @click="eliminarMoldeBD(id)" class="text-red-600 hover:text-red-800 font-bold uppercase text-xs">Borrar</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
 
         </main>
@@ -307,6 +361,7 @@
         createApp({
             setup() {
                 const vista_actual = ref('optimizador')
+                const sub_vista_admin = ref('crear') // Control de pestañas de administración
 
                 // --- ESTADOS OPTIMIZADOR ---
                 const estado_sistema = ref('En espera')
@@ -331,26 +386,19 @@
                 const cargarModelos = async () => {
                     try {
                         const respuesta = await fetch('http://localhost:8000/api/modelos')
-                        if (respuesta.ok) {
-                            modelos_disponibles.value = await respuesta.json()
-                        }
+                        if (respuesta.ok) modelos_disponibles.value = await respuesta.json()
                     } catch (error) {
-                        console.error("No se pudo conectar", error)
                         estado_sistema.value = 'Sin conexión'
                     }
                 }
 
-                // --- ESTADOS MOLDES GLOBALES ---
                 const moldes_disponibles = ref({})
-                
                 const cargarMoldes = async () => {
                     try {
                         const respuesta = await fetch('http://localhost:8000/api/moldes')
-                        if (respuesta.ok) {
-                            moldes_disponibles.value = await respuesta.json()
-                        }
+                        if (respuesta.ok) moldes_disponibles.value = await respuesta.json()
                     } catch (error) {
-                        console.error("Error al cargar piezas", error)
+                        console.error("Error al cargar piezas")
                     }
                 }
 
@@ -411,12 +459,7 @@
                     progreso_actual.value = 'Conectando...'
                     resultado_final.value = null
 
-                    const payload = {
-                        ancho_mesa: ancho_mesa.value,
-                        largo_mesa: largo_mesa.value,
-                        pedidos: lista_pedidos.value
-                    }
-
+                    const payload = { ancho_mesa: ancho_mesa.value, largo_mesa: largo_mesa.value, pedidos: lista_pedidos.value }
                     try {
                         const respuesta = await fetch('http://localhost:8000/api/optimizar', {
                             method: 'POST',
@@ -437,39 +480,42 @@
                 const archivo_dxf = ref(null)
                 const mensaje_molde = ref('')
 
-                const capturarArchivo = (event) => {
-                    archivo_dxf.value = event.target.files[0]
-                }
+                const capturarArchivo = (event) => { archivo_dxf.value = event.target.files[0] }
 
                 const subirMolde = async () => {
                     if (!archivo_dxf.value) return;
-                    
                     const formData = new FormData();
                     formData.append("archivo", archivo_dxf.value);
-                    
                     try {
-                        const respuesta = await fetch('http://localhost:8000/api/moldes/subir', {
-                            method: 'POST',
-                            body: formData 
-                        });
-                        
+                        const respuesta = await fetch('http://localhost:8000/api/moldes/subir', { method: 'POST', body: formData });
                         if (!respuesta.ok) throw new Error("Error al subir");
-                        
                         const data = await respuesta.json();
                         mensaje_molde.value = `¡Pieza guardada: ${data.molde_id}!`;
-                        
                         archivo_dxf.value = null;
                         document.querySelector('input[type="file"]').value = '';
                         setTimeout(() => mensaje_molde.value = '', 4000);
-                        
                         cargarMoldes(); 
-                        
                     } catch (error) {
                         mensaje_molde.value = "Error al subir archivo.";
-                        console.error(error);
                     }
                 }
 
+                // --- CRUD DE MOLDES ---
+                const eliminarMoldeBD = async (id) => {
+                    if(!confirm(`¿Seguro que deseas eliminar el archivo físico ${id}?\n\nAdvertencia: Si este molde pertenece a una receta, esa prenda dará error al intentar optimizarse.`)) return;
+                    try {
+                        const respuesta = await fetch(`http://localhost:8000/api/moldes/${id}`, { method: 'DELETE' });
+                        if(respuesta.ok) {
+                            alert("Molde eliminado exitosamente.");
+                            cargarMoldes();
+                        }
+                    } catch (error) {
+                        alert("Error al intentar eliminar el molde.");
+                    }
+                }
+
+                // --- CRUD DE MODELOS (RECETAS) ---
+                const editando_modelo_id = ref(null)
                 const nuevo_modelo_tipo = ref('')
                 const nuevo_modelo_nombre = ref('')
                 const molde_id_temp = ref('')
@@ -479,59 +525,79 @@
 
                 const agregarMoldeReceta = () => {
                     if (molde_id_temp.value && cantidad_molde_temp.value > 0) {
-                        receta_temporal.value.push({
-                            molde_id: molde_id_temp.value.trim(), 
-                            cantidad_por_prenda: cantidad_molde_temp.value
-                        });
+                        receta_temporal.value.push({ molde_id: molde_id_temp.value.trim(), cantidad_por_prenda: cantidad_molde_temp.value });
                         molde_id_temp.value = '';
                         cantidad_molde_temp.value = 1;
                     }
                 }
 
-                const crearModelo = async () => {
-                    const payload = {
-                        tipo: nuevo_modelo_tipo.value,
-                        nombre: nuevo_modelo_nombre.value,
-                        receta: receta_temporal.value
-                    };
+                const prepararEdicionModelo = (id) => {
+                    const modelo_db = modelos_disponibles.value[id];
+                    editando_modelo_id.value = id;
+                    nuevo_modelo_tipo.value = modelo_db.tipo;
+                    nuevo_modelo_nombre.value = modelo_db.nombre;
+                    // Clonamos la receta para no alterar la original hasta guardar
+                    receta_temporal.value = modelo_db.receta.map(item => ({...item}));
+                    sub_vista_admin.value = 'crear';
+                }
 
+                const cancelarEdicion = () => {
+                    editando_modelo_id.value = null;
+                    nuevo_modelo_tipo.value = '';
+                    nuevo_modelo_nombre.value = '';
+                    receta_temporal.value = [];
+                }
+
+                const guardarModelo = async () => {
+                    const payload = { tipo: nuevo_modelo_tipo.value, nombre: nuevo_modelo_nombre.value, receta: receta_temporal.value };
                     try {
-                        const respuesta = await fetch('http://localhost:8000/api/modelos/crear', {
-                            method: 'POST',
+                        const url = editando_modelo_id.value ? `http://localhost:8000/api/modelos/${editando_modelo_id.value}` : 'http://localhost:8000/api/modelos/crear';
+                        const method = editando_modelo_id.value ? 'PUT' : 'POST';
+
+                        const respuesta = await fetch(url, {
+                            method: method,
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
                         });
                         
-                        if (!respuesta.ok) throw new Error("Error al crear");
-                        
+                        if (!respuesta.ok) throw new Error("Error al guardar");
                         const data = await respuesta.json();
-                        mensaje_modelo.value = `¡Modelo creado! ID: ${data.modelo_id}`;
                         
-                        nuevo_modelo_tipo.value = '';
-                        nuevo_modelo_nombre.value = '';
-                        receta_temporal.value = [];
+                        mensaje_modelo.value = editando_modelo_id.value ? '¡Modelo Actualizado!' : `¡Modelo creado! ID: ${data.modelo_id}`;
+                        
+                        cancelarEdicion(); // Limpia todo
                         setTimeout(() => mensaje_modelo.value = '', 5000);
-                        
                         cargarModelos();
                         
                     } catch (error) {
-                        mensaje_modelo.value = "Error al guardar el modelo.";
-                        console.error(error);
+                        mensaje_modelo.value = "Error al procesar la solicitud.";
+                    }
+                }
+
+                const eliminarModeloBD = async (id) => {
+                    if(!confirm(`¿Estás seguro de eliminar el modelo ${id}?`)) return;
+                    try {
+                        const respuesta = await fetch(`http://localhost:8000/api/modelos/${id}`, { method: 'DELETE' });
+                        if(respuesta.ok) {
+                            cargarModelos();
+                        }
+                    } catch (error) {
+                        alert("Error al intentar eliminar el modelo.");
                     }
                 }
 
                 return {
-                    vista_actual,
+                    vista_actual, sub_vista_admin,
                     estado_sistema, ancho_mesa, largo_mesa, modelos_disponibles,
                     tipo_seleccionado, modelos_filtrados, modelo_seleccionado,
                     cantidad_seleccionada, lista_pedidos, agregarPedido, eliminarPedido,
                     optimizando, progreso_actual, resultado_final, iniciarOptimizacion,
-                    moldes_disponibles, archivo_dxf, mensaje_molde, capturarArchivo, subirMolde,
-                    nuevo_modelo_tipo, nuevo_modelo_nombre, molde_id_temp, cantidad_molde_temp,
-                    receta_temporal, mensaje_modelo, agregarMoldeReceta, crearModelo
+                    moldes_disponibles, archivo_dxf, mensaje_molde, capturarArchivo, subirMolde, eliminarMoldeBD,
+                    editando_modelo_id, nuevo_modelo_tipo, nuevo_modelo_nombre, molde_id_temp, cantidad_molde_temp,
+                    receta_temporal, mensaje_modelo, agregarMoldeReceta, guardarModelo, prepararEdicionModelo, cancelarEdicion, eliminarModeloBD
                 }
             }
         }).mount('#app')
     </script>
 </body>
-</html>
+</html> 

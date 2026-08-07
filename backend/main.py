@@ -375,3 +375,66 @@ def crear_nuevo_modelo(payload: NuevoModeloRequest):
         json.dump(datos, f, indent=4, ensure_ascii=False)
         
     return {"mensaje": "Modelo creado con éxito", "modelo_id": nuevo_id_modelo}
+
+# ==========================================
+# RUTAS DE EDICIÓN Y ELIMINACIÓN (CRUD)
+# ==========================================
+
+@app.delete("/api/moldes/{molde_id}")
+def eliminar_molde(molde_id: str):
+    """Elimina un molde del registro de la base de datos."""
+    ruta_json = os.path.join(os.path.dirname(__file__), "base_datos.json")
+    with open(ruta_json, "r", encoding="utf-8") as f:
+        datos = json.load(f)
+    
+    if molde_id in datos.get("moldes", {}):
+        # Eliminamos el registro del JSON (opcional: podrías agregar código para borrar el .dxf físico)
+        del datos["moldes"][molde_id]
+        with open(ruta_json, "w", encoding="utf-8") as f:
+            json.dump(datos, f, indent=4, ensure_ascii=False)
+        return {"mensaje": "Molde eliminado correctamente"}
+        
+    raise HTTPException(status_code=404, detail="Molde no encontrado")
+
+@app.delete("/api/modelos/{modelo_id}")
+def eliminar_modelo(modelo_id: str):
+    """Elimina una receta/modelo completo."""
+    ruta_json = os.path.join(os.path.dirname(__file__), "base_datos.json")
+    with open(ruta_json, "r", encoding="utf-8") as f:
+        datos = json.load(f)
+    
+    if modelo_id in datos.get("modelos", {}):
+        del datos["modelos"][modelo_id]
+        with open(ruta_json, "w", encoding="utf-8") as f:
+            json.dump(datos, f, indent=4, ensure_ascii=False)
+        return {"mensaje": "Modelo eliminado correctamente"}
+        
+    raise HTTPException(status_code=404, detail="Modelo no encontrado")
+
+@app.put("/api/modelos/{modelo_id}")
+def editar_modelo(modelo_id: str, payload: NuevoModeloRequest):
+    """Sobreescribe un modelo existente con nueva información o moldes."""
+    ruta_json = os.path.join(os.path.dirname(__file__), "base_datos.json")
+    with open(ruta_json, "r", encoding="utf-8") as f:
+        datos = json.load(f)
+        
+    if modelo_id not in datos.get("modelos", {}):
+        raise HTTPException(status_code=404, detail="Modelo no encontrado")
+        
+    # Formatear la nueva receta
+    receta_formateada = [
+        {"molde_id": item.molde_id, "cantidad_por_prenda": item.cantidad_por_prenda}
+        for item in payload.receta
+    ]
+    
+    # Sobreescribimos los datos
+    datos["modelos"][modelo_id] = {
+        "tipo": payload.tipo,
+        "nombre": payload.nombre,
+        "receta": receta_formateada
+    }
+    
+    with open(ruta_json, "w", encoding="utf-8") as f:
+        json.dump(datos, f, indent=4, ensure_ascii=False)
+        
+    return {"mensaje": "Modelo actualizado con éxito"}

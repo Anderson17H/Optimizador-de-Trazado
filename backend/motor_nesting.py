@@ -101,90 +101,87 @@ def generar_ordenes_estrategicos(piezas):
 # ==========================================================
 # 3. LÓGICA DE EMPAQUETADO EXACTO Y PODA ANTICIPADA
 # ==========================================================
-def empaquetar_un_orden(piezas_ordenadas, ancho_mesa, tolerancia_cm, paso_rot, valor_buffer, largo_maximo=float('inf'), caja_doblez=None, pos_x_caja=0.0):
-    piezas_colocadas_finales = []
-    memoria_mesa = []
+def empaquetar_un_orden(piezas_ordenadas, ancho_mesa, tolerancia_cm, paso_rot, valor_buffer,
+                         largo_maximo=float('inf'), caja_doblez=None, pos_x_caja=0.0,
+                         estado_inicial=None, desde_indice=0, guardar_historial=False):
 
-    # --- INYECCIÓN DE LA CAJA DE DOBLEZ COMO OBSTÁCULO INICIAL ---
-    if caja_doblez is not None:
-        caja_poly = caja_doblez[0]
-        alias_caja = caja_doblez[1]
-        
-        # 1. Llevar la caja al origen real (X=0, Y=0) para el escudo NFP
-        minx, miny, _, _ = caja_poly.bounds
-        caja_origen = translate(caja_poly, xoff=-minx, yoff=-miny)
-        caja_origen_reducida = reducir_pieza(caja_origen, valor_buffer)
-        
-        # 2. La caja ubicada físicamente donde se dibujará
-        caja_ubicada = translate(caja_origen, xoff=pos_x_caja, yoff=0.0)
-        
-        # 3. Guardar en memoria el poligono origen para el NFP, y el X, Y real
-        memoria_mesa.append((caja_ubicada, caja_origen_reducida, pos_x_caja, 0.0))
-        piezas_colocadas_finales.append((caja_ubicada, alias_caja))
-    # --------------------------------------------------------------------  
+    if estado_inicial is not None:
+        piezas_colocadas_finales = list(estado_inicial[0])
+        memoria_mesa = list(estado_inicial[1])
+    else:
+        piezas_colocadas_finales = []
+        memoria_mesa = []
+        desde_indice = 0
+        if caja_doblez is not None:
+            caja_poly = caja_doblez[0]
+            alias_caja = caja_doblez[1]
+            minx, miny, _, _ = caja_poly.bounds
+            caja_origen = translate(caja_poly, xoff=-minx, yoff=-miny)
+            caja_origen_reducida = reducir_pieza(caja_origen, valor_buffer)
+            caja_ubicada = translate(caja_origen, xoff=pos_x_caja, yoff=0.0)
+            memoria_mesa.append((caja_ubicada, caja_origen_reducida, pos_x_caja, 0.0))
+            piezas_colocadas_finales.append((caja_ubicada, alias_caja))
 
-    for pieza_tupla in piezas_ordenadas:
+    historial = [(list(piezas_colocadas_finales), list(memoria_mesa))] if guardar_historial else None
+
+    for idx in range(desde_indice, len(piezas_ordenadas)):
+        pieza_tupla = piezas_ordenadas[idx]
         pieza = pieza_tupla[0]
         alias = pieza_tupla[1]
-        tolerancia_cm = pieza_tupla[2]
-        
+        tolerancia_cm_pieza = pieza_tupla[2]
+
         mejor_y_global = float('inf')
         mejor_x_global = float('inf')
         mejor_pieza_ubicada = None
         mejor_pieza_reducida = None
-        
+
         alto_molde = pieza.bounds[3] - pieza.bounds[1]
-        angulos_a_probar = generar_angulos_por_aplome(tolerancia_cm, alto_molde, paso_rot)
+        angulos_a_probar = generar_angulos_por_aplome(tolerancia_cm_pieza, alto_molde, paso_rot)
 
         for angulo in angulos_a_probar:
             pieza_rotada = rotate(pieza, angulo, origin='center')
-            
             minx, miny, maxx, maxy = pieza_rotada.bounds
             pieza_origen = translate(pieza_rotada, xoff=-minx, yoff=-miny)
             ancho_pieza = maxx - minx
-            
+
             if not memoria_mesa:
                 mejor_pieza_ubicada = pieza_origen
                 mejor_pieza_reducida = reducir_pieza(pieza_origen, valor_buffer)
                 mejor_x_global = 0.0
                 mejor_y_global = 0.0
-                break 
-            
+                break
+
             pieza_movil_reducida = reducir_pieza(pieza_origen, valor_buffer)
             zonas_prohibidas = []
-            
             for _, pieza_fija_reducida, fx, fy in memoria_mesa:
-                poligonos_nfp_origen = calcular_nfp_cacheado(pieza_fija_reducida, pieza_movil_reducida)
-                for poly in poligonos_nfp_origen:
+                for poly in calcular_nfp_cacheado(pieza_fija_reducida, pieza_movil_reducida):
                     zonas_prohibidas.append(translate(poly, xoff=fx, yoff=fy))
-            
+
             if zonas_prohibidas:
-                zonas_limpias = [z.buffer(0) for z in zonas_prohibidas]
-                gran_zona_prohibida = unary_union(zonas_limpias)
-                
-                puntos_validos = []
+                gran_zona_prohibida = unary_union([z.buffer(0) for z in zonas_prohibidas])
                 geometrias = [gran_zona_prohibida] if gran_zona_prohibida.geom_type == 'Polygon' else gran_zona_prohibida.geoms
-                
+
+                puntos_validos = []
                 for geom in geometrias:
                     puntos_validos.extend(list(geom.exterior.coords))
                     for interior in geom.interiors:
                         puntos_validos.extend(list(interior.coords))
-                
-                puntos_filtrados = []
-                for px, py in puntos_validos:
-                    if px >= 0 and (px + ancho_pieza - (valor_buffer*2)) <= ancho_mesa and py >= 0:
-                        puntos_filtrados.append((px, py))
-                
+
+                puntos_filtrados = [
+                    (px, py) for px, py in puntos_validos
+                    if px >= 0 and (px + ancho_pieza - (valor_buffer * 2)) <= ancho_mesa and py >= 0
+                ]
+
                 if puntos_filtrados:
                     puntos_filtrados.sort(key=lambda p: (p[1], p[0]))
                     mejor_x_angulo, mejor_y_angulo = puntos_filtrados[0]
-                    
+
                     if mejor_y_angulo < mejor_y_global or (mejor_y_angulo == mejor_y_global and mejor_x_angulo < mejor_x_global):
                         mejor_y_global = mejor_y_angulo
                         mejor_x_global = mejor_x_angulo
                         mejor_pieza_ubicada = translate(pieza_origen, xoff=mejor_x_angulo, yoff=mejor_y_angulo)
                         mejor_pieza_reducida = pieza_movil_reducida
-        
+
         if mejor_pieza_ubicada is not None:
             memoria_mesa.append((mejor_pieza_ubicada, mejor_pieza_reducida, mejor_x_global, mejor_y_global))
             piezas_colocadas_finales.append((mejor_pieza_ubicada, alias))
@@ -194,16 +191,84 @@ def empaquetar_un_orden(piezas_ordenadas, ancho_mesa, tolerancia_cm, paso_rot, v
             largo_actual = max([p[0].bounds[3] for p in piezas_colocadas_finales]) if piezas_colocadas_finales else 0
             pieza_emergencia = translate(pieza_origen, xoff=0, yoff=largo_actual)
             pieza_emergencia_reducida = reducir_pieza(pieza_origen, valor_buffer)
-            
             memoria_mesa.append((pieza_emergencia, pieza_emergencia_reducida, 0.0, largo_actual))
             piezas_colocadas_finales.append((pieza_emergencia, alias))
 
-        # --- FILTRO 2 (PODA DE PERMUTACIÓN) ---
+        if guardar_historial:
+            historial.append((list(piezas_colocadas_finales), list(memoria_mesa)))
+
         largo_actual_tizado = max([p[0].bounds[3] for p in piezas_colocadas_finales])
         if largo_actual_tizado > largo_maximo:
-            return None  # Aborta este orden específico inmediatamente
+            return (None, historial) if guardar_historial else None
 
-    return piezas_colocadas_finales
+    return (piezas_colocadas_finales, historial) if guardar_historial else piezas_colocadas_finales
+
+def compactar_por_gravedad(piezas_colocadas, ancho_mesa, valor_buffer, alias_caja="CAJA COMPARTIDA / DOBLEZ"):
+    """
+    Pase final de un solo recorrido: reubica cada pieza lo más abajo/izquierda
+    posible contra las piezas ya fijas, sin cambiar orden ni rotación.
+    Cierra huecos residuales de redondeo/buffer que el hill-climbing no toca.
+    """
+    if not piezas_colocadas:
+        return piezas_colocadas
+
+    memoria_mesa = []
+    resultado = []
+
+    for poligono, alias in piezas_colocadas:
+        if alias == alias_caja:
+            minx, miny, _, _ = poligono.bounds
+            reducido = reducir_pieza(translate(poligono, xoff=-minx, yoff=-miny), valor_buffer)
+            memoria_mesa.append((poligono, reducido, minx, miny))
+            resultado.append((poligono, alias))
+            continue
+
+        minx, miny, maxx, maxy = poligono.bounds
+        pieza_origen = translate(poligono, xoff=-minx, yoff=-miny)
+        ancho_pieza = maxx - minx
+        pieza_reducida_origen = reducir_pieza(pieza_origen, valor_buffer)
+
+        if not memoria_mesa:
+            memoria_mesa.append((poligono, pieza_reducida_origen, minx, miny))
+            resultado.append((poligono, alias))
+            continue
+
+        zonas_prohibidas = []
+        for _, fija_reducida, fx, fy in memoria_mesa:
+            for poly in calcular_nfp_cacheado(fija_reducida, pieza_reducida_origen):
+                zonas_prohibidas.append(translate(poly, xoff=fx, yoff=fy))
+
+        mejor_x, mejor_y = minx, miny  # posición actual = piso, nunca empeoramos
+
+        if zonas_prohibidas:
+            gran_zona = unary_union([z.buffer(0) for z in zonas_prohibidas])
+            geometrias = [gran_zona] if gran_zona.geom_type == 'Polygon' else gran_zona.geoms
+
+            puntos_validos = []
+            for geom in geometrias:
+                puntos_validos.extend(list(geom.exterior.coords))
+                for interior in geom.interiors:
+                    puntos_validos.extend(list(interior.coords))
+
+            candidatos = []
+            for px, py in puntos_validos:
+                if px < 0 or py < 0:
+                    continue
+                if px + ancho_pieza - (valor_buffer * 2) > ancho_mesa:
+                    continue
+                if py < mejor_y or (py == mejor_y and px < mejor_x):
+                    candidatos.append((py, px))
+
+            if candidatos:
+                candidatos.sort()
+                mejor_y, mejor_x = candidatos[0]
+
+        pieza_final = translate(pieza_origen, xoff=mejor_x, yoff=mejor_y)
+        pieza_final_reducida = reducir_pieza(pieza_origen, valor_buffer)
+        memoria_mesa.append((pieza_final, pieza_final_reducida, mejor_x, mejor_y))
+        resultado.append((pieza_final, alias))
+
+    return resultado
 
 def identificar_indices_criticos(orden_piezas, resultado_colocado, margen=5.0):
     """
@@ -288,35 +353,59 @@ def optimizar_nesting_completo(piezas_originales, ancho_mesa, tolerancia_rot=2.0
                 mejor_largo_global = largo_prueba
                 mejor_resultado_global = resultado_prueba
 
-        # --- FASE 2: COMPRESIÓN E INTERLOCKING (DIRIGIDA) ---
+        # --- FASE 2: COMPRESIÓN E INTERLOCKING (dirigida + warm-start real) ---
         if mejor_orden_local is not None and max_intercambios > 0 and len(mejor_orden_local) > 1:
             orden_base = list(mejor_orden_local)
-            resultado_base = None  # guardamos el último resultado colocado para identificar críticos
+
+            resultado_base, historial_base = empaquetar_un_orden(
+                orden_base, ancho_mesa, tolerancia_rot, paso_rot, valor_buffer,
+                largo_maximo, caja_doblez, pos_x, guardar_historial=True
+            )
+
+            tried_swaps = set()
+            VENTANA = max(6, len(orden_base) // 4)
 
             for i in range(max_intercambios):
                 if callback_progreso:
-                    msg_swap = f"Compresión dirigida {i+1}/{max_intercambios}"
+                    msg_swap = f"Compresión {i+1}/{max_intercambios}"
                     if caja_doblez:
                         msg_swap += f" | Caja en X: {pos_x:.1f}"
                     callback_progreso(msg_swap)
 
-                # --- SELECCIÓN DIRIGIDA ---
                 indices_criticos = identificar_indices_criticos(orden_base, resultado_base) if resultado_base else []
 
-                if indices_criticos and random.random() < 0.75:
-                    # 75% de las veces: forzamos que UNO de los dos índices sea una pieza crítica
-                    idx1 = random.choice(indices_criticos)
-                    idx2 = random.randrange(len(orden_base))
-                    while idx2 == idx1:
-                        idx2 = random.randrange(len(orden_base))
-                else:
-                    # 25% de las veces: exploración libre (para no perder diversidad y evitar overfitting local)
-                    idx1, idx2 = random.sample(range(len(orden_base)), 2)
+                intento_generacion = 0
+                while True:
+                    if indices_criticos and random.random() < 0.75:
+                        idx_base = random.choice(indices_criticos)
+                        lo = max(0, idx_base - VENTANA)
+                        hi = min(len(orden_base) - 1, idx_base + VENTANA)
+                        idx_otro = random.randint(lo, hi)
+                        while idx_otro == idx_base:
+                            idx_otro = random.randint(lo, hi)
+                        idx1, idx2 = idx_base, idx_otro
+                    else:
+                        idx1, idx2 = random.sample(range(len(orden_base)), 2)
+
+                    par = (min(idx1, idx2), max(idx1, idx2))
+                    intento_generacion += 1
+                    if par not in tried_swaps or intento_generacion > 20:
+                        break
+
+                tried_swaps.add(par)
 
                 orden_mutado = list(orden_base)
                 orden_mutado[idx1], orden_mutado[idx2] = orden_mutado[idx2], orden_mutado[idx1]
 
-                resultado_prueba = empaquetar_un_orden(orden_mutado, ancho_mesa, tolerancia_rot, paso_rot, valor_buffer, largo_maximo, caja_doblez, pos_x)
+                k = min(idx1, idx2)
+                estado_inicial = historial_base[k] if historial_base and k < len(historial_base) else None
+
+                # SIEMPRE pedimos historial al probar: si mejora, lo reusamos gratis
+                resultado_prueba, historial_local = empaquetar_un_orden(
+                    orden_mutado, ancho_mesa, tolerancia_rot, paso_rot, valor_buffer,
+                    largo_maximo, caja_doblez, pos_x,
+                    estado_inicial=estado_inicial, desde_indice=k, guardar_historial=True
+                )
 
                 if resultado_prueba is None:
                     continue
@@ -327,13 +416,16 @@ def optimizar_nesting_completo(piezas_originales, ancho_mesa, tolerancia_rot=2.0
                     mejor_largo_local = largo_prueba
                     mejor_orden_local = orden_mutado
                     orden_base = orden_mutado
-                    resultado_base = resultado_prueba  # actualizamos referencia para recalcular críticos
+                    # EMPALME, no recálculo: historial_base[:k] ya era correcto, solo pegamos la cola nueva
+                    historial_base = historial_base[:k] + historial_local
+                    resultado_base = resultado_prueba
+                    tried_swaps = set()
 
                 if largo_prueba < mejor_largo_global:
                     mejor_largo_global = largo_prueba
                     mejor_resultado_global = resultado_prueba
 
-    return mejor_resultado_global
+        return mejor_resultado_global
 # ==========================================================
 # 4. LÓGICA DE NEGOCIO Y SUB-BLOQUES
 # ==========================================================
@@ -360,3 +452,16 @@ def empaquetar_sub_bloque_doblez(piezas_doblez, ancho_mesa, tolerancia_rot, paso
     super_poligono = box(0, 0, ancho_caja, largo_caja_mesa)
     
     return (super_poligono, "CAJA COMPARTIDA / DOBLEZ"), resultado_sub
+
+def identificar_indices_criticos(orden_piezas, resultado_colocado, margen=5.0):
+    if not resultado_colocado:
+        return []
+    largo_max = max(p[0].bounds[3] for p in resultado_colocado)
+    alias_criticos = [alias for (poligono, alias) in resultado_colocado if poligono.bounds[3] >= largo_max - margen]
+    indices_criticos = []
+    restantes = list(alias_criticos)
+    for idx, (poligono, alias, tolerancia) in enumerate(orden_piezas):
+        if alias in restantes:
+            indices_criticos.append(idx)
+            restantes.remove(alias)
+    return indices_criticos

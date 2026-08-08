@@ -11,6 +11,15 @@ from shapely.ops import unary_union
 FACTOR_ESCALA = 10000
 _nfp_cache = {}
 
+_buffer_cache = {}
+
+def reducir_pieza_cacheada(pieza: Polygon, valor_buffer: float, angulo: float) -> Polygon:
+    firma = obtener_firma_poligono(pieza)
+    clave = (firma, round(angulo, 3), valor_buffer)
+    if clave not in _buffer_cache:
+        _buffer_cache[clave] = reducir_pieza(pieza, valor_buffer)
+    return _buffer_cache[clave]
+
 def obtener_firma_poligono(poly: Polygon):
     return tuple((round(x, 2), round(y, 2)) for x, y in poly.exterior.coords)
 
@@ -31,12 +40,12 @@ def calcular_nfp_cacheado(pieza_fija_origen: Polygon, pieza_movil_origen: Polygo
         movil_invertida = [[-x, -y] for x, y in pieza_movil_origen.exterior.coords]
         ruta_fija = [[int(x * FACTOR_ESCALA), int(y * FACTOR_ESCALA)] for x, y in pieza_fija_origen.exterior.coords]
         ruta_movil = [[int(x * FACTOR_ESCALA), int(y * FACTOR_ESCALA)] for x, y in movil_invertida]
-        
+
         resultado_clipper = pyclipper.MinkowskiSum(ruta_movil, ruta_fija, True)
-        
+
         poligonos_nfp = []
         for trayectoria in resultado_clipper:
-            if len(trayectoria) >= 3: 
+            if len(trayectoria) >= 3:
                 coords_reales = [(x / FACTOR_ESCALA, y / FACTOR_ESCALA) for x, y in trayectoria]
                 poli = Polygon(coords_reales).buffer(0)
                 if not poli.is_empty:
@@ -54,19 +63,19 @@ def calcular_nfp_cacheado(pieza_fija_origen: Polygon, pieza_movil_origen: Polygo
 def generar_angulos_por_aplome(tolerancia_cm, alto_molde, paso_rot=1):
     if tolerancia_cm <= 0:
         return [0, 180]
-        
+
     max_rad = math.atan((2.0 * tolerancia_cm) / alto_molde)
     max_deg = math.degrees(max_rad)
-    
+
     angulos = []
     num_pasos = int(max_deg / paso_rot)
-    
+
     for base in [0, 180]:
         angulos.append(base)
         for i in range(1, num_pasos + 1):
             angulos.append(base + (i * paso_rot))
             angulos.append(base - (i * paso_rot))
-            
+
     return list(set(angulos))
 
 def generar_ordenes_estrategicos(piezas):
@@ -146,12 +155,12 @@ def empaquetar_un_orden(piezas_ordenadas, ancho_mesa, tolerancia_cm, paso_rot, v
 
             if not memoria_mesa:
                 mejor_pieza_ubicada = pieza_origen
-                mejor_pieza_reducida = reducir_pieza(pieza_origen, valor_buffer)
+                mejor_pieza_reducida = reducir_pieza_cacheada(pieza_origen, valor_buffer, angulo)
                 mejor_x_global = 0.0
                 mejor_y_global = 0.0
                 break
 
-            pieza_movil_reducida = reducir_pieza(pieza_origen, valor_buffer)
+            pieza_movil_reducida = reducir_pieza_cacheada(pieza_origen, valor_buffer, angulo)
             zonas_prohibidas = []
             for _, pieza_fija_reducida, fx, fy in memoria_mesa:
                 for poly in calcular_nfp_cacheado(pieza_fija_reducida, pieza_movil_reducida):
@@ -298,11 +307,11 @@ def identificar_indices_criticos(orden_piezas, resultado_colocado, margen=5.0):
 def optimizar_nesting_completo(piezas_originales, ancho_mesa, tolerancia_rot=2.0, paso_rot=1,
                                 valor_buffer=0.1, n_ordenes_aleatorios=4, max_intercambios=15,
                                 callback_progreso=None, largo_maximo=float('inf'), caja_doblez=None):
-    
+
     if not piezas_originales and caja_doblez is not None:
         minx, miny, _, _ = caja_doblez[0].bounds
         return [(translate(caja_doblez[0], xoff=-minx, yoff=-miny), caja_doblez[1])]
-        
+
     if not piezas_originales:
         return []
 
@@ -317,7 +326,7 @@ def optimizar_nesting_completo(piezas_originales, ancho_mesa, tolerancia_rot=2.0
     if caja_doblez is not None:
         ancho_caja = caja_doblez[0].bounds[2] - caja_doblez[0].bounds[0]
         max_x = ancho_mesa - ancho_caja
-        
+
         if max_x > 0.1:
             posiciones_caja = []
             num_pasos = 5
@@ -329,7 +338,7 @@ def optimizar_nesting_completo(piezas_originales, ancho_mesa, tolerancia_rot=2.0
     for pos_x in posiciones_caja:
         mejor_orden_local = None
         mejor_largo_local = float('inf')
-        
+
         # --- FASE 1: HEURÍSTICA BASE ---
         for idx, orden in enumerate(ordenes_a_evaluar):
             if callback_progreso:
@@ -337,18 +346,18 @@ def optimizar_nesting_completo(piezas_originales, ancho_mesa, tolerancia_rot=2.0
                 if caja_doblez:
                     msg += f" | Caja en X: {pos_x:.1f}"
                 callback_progreso(msg)
-                
+
             resultado_prueba = empaquetar_un_orden(orden, ancho_mesa, tolerancia_rot, paso_rot, valor_buffer, largo_maximo, caja_doblez, pos_x)
-            
+
             if resultado_prueba is None:
                 continue
-            
+
             largo_prueba = max([p[0].bounds[3] for p in resultado_prueba]) if resultado_prueba else float('inf')
-            
+
             if largo_prueba < mejor_largo_local:
                 mejor_largo_local = largo_prueba
                 mejor_orden_local = orden
-                
+
             if largo_prueba < mejor_largo_global:
                 mejor_largo_global = largo_prueba
                 mejor_resultado_global = resultado_prueba
@@ -425,43 +434,33 @@ def optimizar_nesting_completo(piezas_originales, ancho_mesa, tolerancia_rot=2.0
                     mejor_largo_global = largo_prueba
                     mejor_resultado_global = resultado_prueba
 
-        return mejor_resultado_global
+    if mejor_resultado_global:
+        mejor_resultado_global = compactar_por_gravedad(mejor_resultado_global, ancho_mesa, valor_buffer)
+
+    return mejor_resultado_global
 # ==========================================================
 # 4. LÓGICA DE NEGOCIO Y SUB-BLOQUES
 # ==========================================================
 def empaquetar_sub_bloque_doblez(piezas_doblez, ancho_mesa, tolerancia_rot, paso_rot, valor_buffer):
     if not piezas_doblez:
         return None, []
-    
+
     # Empaquetamos los moldes verdaderos a tamaño real sin caja ni límite
     resultado_sub = optimizar_nesting_completo(piezas_doblez, ancho_mesa, tolerancia_rot, paso_rot, valor_buffer, n_ordenes_aleatorios=1, max_intercambios=0, callback_progreso=None)
-    
+
     if not resultado_sub:
         return None, []
-        
+
     minx = min([p[0].bounds[0] for p in resultado_sub])
     miny = min([p[0].bounds[1] for p in resultado_sub])
     maxx = max([p[0].bounds[2] for p in resultado_sub])
     maxy = max([p[0].bounds[3] for p in resultado_sub])
-    
+
     ancho_caja = maxx - minx
     largo_caja_desdoblada = maxy - miny
-    
+
     # Partimos la longitud de la caja por la mitad para la mesa principal.
     largo_caja_mesa = largo_caja_desdoblada / 2.0
     super_poligono = box(0, 0, ancho_caja, largo_caja_mesa)
-    
-    return (super_poligono, "CAJA COMPARTIDA / DOBLEZ"), resultado_sub
 
-def identificar_indices_criticos(orden_piezas, resultado_colocado, margen=5.0):
-    if not resultado_colocado:
-        return []
-    largo_max = max(p[0].bounds[3] for p in resultado_colocado)
-    alias_criticos = [alias for (poligono, alias) in resultado_colocado if poligono.bounds[3] >= largo_max - margen]
-    indices_criticos = []
-    restantes = list(alias_criticos)
-    for idx, (poligono, alias, tolerancia) in enumerate(orden_piezas):
-        if alias in restantes:
-            indices_criticos.append(idx)
-            restantes.remove(alias)
-    return indices_criticos
+    return (super_poligono, "CAJA COMPARTIDA / DOBLEZ"), resultado_sub
